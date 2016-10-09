@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="500dp"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="7dp"
+    app:cardBackgroundColor="?colorPrimary"
+    app:cardElevation="4dp">
+
+    <ViewSwitcher
+        android:id="@+id/cardViewSwitcher"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="?android:dividerHorizontal"
+            android:orientation="vertical"
+            android:showDividers="middle">
+
+
+            <ImageView
+                android:id="@+id/cardImage"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:contentDescription="list item picture"
+                android:scaleType="centerCrop"
+                android:src="@drawable/placeholder" />
+
+
+            <TextView
+                android:id="@+id/cardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:padding="7dp"
+                android:text="asdf dsb asdufb af sauiasdfasdfdbf uasbdf uaisdf iuasbdf iuasbdf iasdufb iasudbf "
+                android:textColor="@color/md_white_1000"
+                android:textSize="20sp" />
+
+
+            <TextView
+                android:id="@+id/cardDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="7dp"
+                android:text="Date: "
+                android:textColor="@color/md_white_1000"
+                android:textSize="18sp" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/md_deep_purple_200"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/edit_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Edit"
+                    android:textColor="@color/md_white_1000"
+                    android:textSize="19sp" />
+
+                <TextView
+                    android:id="@+id/delete_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Delete"
+                    android:textColor="@color/md_red_600"
+                    android:textSize="19sp" />
+
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/close_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#00000000"
+                android:src="@drawable/ic_clear_black_24dp" />
+
+        </LinearLayout>
+
+        <!--       <RelativeLayout
+                   android:layout_width="match_parent"
+                   android:layout_height="match_parent"
+                   android:alpha="1"
+                   android:background="@color/md_deep_purple_200"
+                   android:orientation="vertical"
+                   android:padding="16dp"
+                   android:visibility="gone">
+
+
+                   <TextView
+                       android:id="@+id/edit_text"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:layout_marginLeft="20dp"
+                       android:layout_marginStart="20dp"
+                       android:layout_marginTop="20dp"
+                       android:padding="5dp"
+                       android:text="Edit"
+                       android:textColor="@color/md_white_1000"
+                       android:textSize="17sp"/>
+
+                   <TextView
+                       android:id="@+id/delete_text"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:layout_marginLeft="10dp"
+                       android:layout_marginStart="10dp"
+                       android:layout_marginTop="20dp"
+                       android:layout_toEndOf="@+id/edit_text"
+                       android:layout_toRightOf="@id/edit_text"
+                       android:padding="5dp"
+                       android:text="Delete"
+                       android:textColor="@color/md_red_600"
+                       android:textSize="17sp"/>
+
+
+                   <ImageButton
+                       android:id="@+id/close_text"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:layout_alignParentEnd="true"
+                       android:layout_alignParentRight="true"
+                       android:layout_alignParentTop="true"
+                       android:background="#00000000"
+                       android:src="@drawable/ic_clear_black_24dp"/>
+
+               </RelativeLayout>-->
+
+
+    </ViewSwitcher>
+
+
+</android.support.v7.widget.CardView>

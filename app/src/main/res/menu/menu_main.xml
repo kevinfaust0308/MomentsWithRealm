@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context=".activities.MainActivity">
+
+    <item
+        android:id="@+id/action_add"
+        android:icon="@drawable/ic_add_box_white_24dp"
+        android:orderInCategory="1"
+        android:title="Add Moment"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_launch_filter_screen"
+        android:icon="@drawable/ic_search_white_24dp"
+        android:orderInCategory="2"
+        android:title="Filter"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_info_outline_white_24dp"
+        android:orderInCategory="3"
+        android:title="Settings"
+        app:showAsAction="always"/>
+
+</menu>
