@@ -17,7 +17,7 @@ import android.widget.CheckBox;
 import android.widget.Toast;
 
 import com.monsoonblessing.moments.CurrentDate;
-import com.monsoonblessing.moments.DatabaseHelper;
+import com.monsoonblessing.moments.RealmDatabaseHelper;
 import com.monsoonblessing.moments.R;
 
 /**
@@ -85,7 +85,7 @@ public class SettingsDialog extends DialogFragment {
 
         @Override
         protected Void doInBackground(Void... params) {
-            DatabaseHelper dbHelper = new DatabaseHelper(getActivity());
+            RealmDatabaseHelper dbHelper = new RealmDatabaseHelper(getActivity());
             dbHelper.deleteAllEntries();
             dbHelper.closeDatabase();
             return null;

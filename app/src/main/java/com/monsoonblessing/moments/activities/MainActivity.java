@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
@@ -21,10 +20,9 @@ import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import com.google.gson.Gson;
-import com.monsoonblessing.moments.CalendarUtil;
 import com.monsoonblessing.moments.CurrentDate;
-import com.monsoonblessing.moments.DatabaseHelper;
-import com.monsoonblessing.moments.Moment;
+import com.monsoonblessing.moments.MomentModel;
+import com.monsoonblessing.moments.RealmDatabaseHelper;
 import com.monsoonblessing.moments.PreCachingLayoutManager;
 import com.monsoonblessing.moments.R;
 import com.monsoonblessing.moments.RecyclerItemListener;
@@ -61,7 +59,6 @@ public class MainActivity extends BaseActivity
 
         activateToolbar();
 
-        dbHelper = new DatabaseHelper(this);
         new QueryAndCreateAdapter().execute();
 
         mViewSwitcher = (ViewSwitcher) findViewById(R.id.viewSwitcher);
@@ -83,7 +80,7 @@ public class MainActivity extends BaseActivity
                 cardViewSwitcher.setDisplayedChild(1);
                 hideSearchFragment();
 
-                final Moment moment = mAdapter.getData(position);
+                final MomentModel moment = mAdapter.getData(position);
 
                 edit.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -223,7 +220,7 @@ public class MainActivity extends BaseActivity
         hideSearchFragment();
 
         //when adding new entries after deletion, images are still temporarily cached and those old photos will flicker briefly
-        mAdapter.updateData(new ArrayList<Moment>());
+        mAdapter.updateData(new ArrayList<MomentModel>());
         mAdapter.notifyDataSetChanged();
 
         //reset search preferences
@@ -330,7 +327,7 @@ public class MainActivity extends BaseActivity
     private class QueryAndCreateAdapter extends QueryData {
 
         @Override
-        protected void onPostExecute(List<Moment> moments) {
+        protected void onPostExecute(List<MomentModel> moments) {
             super.onPostExecute(moments);
             mAdapter = new MyRecyclerViewAdapter(MainActivity.this, moments);
             mRecyclerView.setAdapter(mAdapter);
@@ -346,7 +343,7 @@ public class MainActivity extends BaseActivity
     private class QueryAndUpdateAdapter extends QueryData {
 
         @Override
-        protected void onPostExecute(List<Moment> moments) {
+        protected void onPostExecute(List<MomentModel> moments) {
             super.onPostExecute(moments);
             Log.d(TAG, "data refreshed");
 
@@ -363,7 +360,7 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    private class QueryData extends AsyncTask<Void, Void, List<Moment>> {
+    private class QueryData extends AsyncTask<Void, Void, List<MomentModel>> {
 
         private ProgressDialog pd;
         private long preTime;
@@ -371,7 +368,7 @@ public class MainActivity extends BaseActivity
 
 
         @Override
-        protected List<Moment> doInBackground(Void... params) {
+        protected List<MomentModel> doInBackground(Void... params) {
 
             Log.d(TAG, "async task do in background running");
 
@@ -386,20 +383,20 @@ public class MainActivity extends BaseActivity
 
 
 /*            for (int i=0;i<500;i++) {
-                dbHelper.insertData("for loop #" + (i+1), "file:///storage/emulated/0/DCIM/Camera/IMG_20160712_033246.jpg", new CurrentDate().getCurrentLongDate(), CalendarUtil.monthNumberToText(i%12), 1950 + i);
+                dbHelper.insertNewMomentIntoDB("for loop #" + (i+1), "file:///storage/emulated/0/DCIM/Camera/IMG_20160712_033246.jpg", new CurrentDate().getCurrentLongDate(), CalendarUtil.monthNumberToText(i%12), 1950 + i);
             }*/
 
 
             //populate an array list by getting all the data sorted
             Cursor cursor = dbHelper.getAllData(mSearchPreference);
-            List<Moment> momentsList = new ArrayList<>();
+            List<MomentModel> momentsList = new ArrayList<>();
 
             if (cursor != null) {
                 while (cursor.moveToNext()) {
                     //get data from each row and add the row to our array list
-                    int id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_1_ID));
-                    String title = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_2_TITLE));
-                    String uri = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_3_URI));
+                    int id = cursor.getInt(cursor.getColumnIndexOrThrow(RealmDatabaseHelper.COL_1_ID));
+                    String title = cursor.getString(cursor.getColumnIndexOrThrow(RealmDatabaseHelper.COL_2_TITLE));
+                    String uri = cursor.getString(cursor.getColumnIndexOrThrow(RealmDatabaseHelper.COL_3_URI));
                     //check if file still exists. user could have deleted pic (ex: deleted from gallery)
                     /*File photoFile = new File(uri);
                     if (!photoFile.exists()) {
@@ -409,11 +406,11 @@ public class MainActivity extends BaseActivity
                     //even if image in file path was deleted, the app won't crash. picasso placeholder image
                     //as set in the adapter will show
 
-                    Long date = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_4_DATE));
-/*                String month = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_5_MONTH));
-                int year = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_6_YEAR));*/
-                    Log.d(TAG, "Moment retrieved from database(id, title, uri, date): " + id + ", " + title + ", " + uri + ", " + date);
-                    Moment moment = new Moment(id, title, Uri.parse(uri), date);
+                    Long date = cursor.getLong(cursor.getColumnIndexOrThrow(RealmDatabaseHelper.COL_4_DATE));
+/*                String month = cursor.getString(cursor.getColumnIndexOrThrow(RealmDatabaseHelper.COL_5_MONTH));
+                int year = cursor.getInt(cursor.getColumnIndexOrThrow(RealmDatabaseHelper.COL_6_YEAR));*/
+                    Log.d(TAG, "MomentModel retrieved from database(id, title, uri, date): " + id + ", " + title + ", " + uri + ", " + date);
+                    MomentModel moment = new MomentModel(id, title, Uri.parse(uri), date);
                     momentsList.add(moment);
                 }
                 cursor.close();
@@ -436,7 +433,7 @@ public class MainActivity extends BaseActivity
 
 
         @Override
-        protected void onPostExecute(List<Moment> moments) {
+        protected void onPostExecute(List<MomentModel> moments) {
             super.onPostExecute(moments);
             postTime = new CurrentDate().getCurrentLongDate();
             pd.dismiss();
@@ -454,8 +451,8 @@ new Thread(new Runnable() {
             @Override
             public void run() {
                 //populate our moments list and pass it to adapter
-                Cursor data = dbHelper.getAllData(DatabaseHelper.RECENT_TO_OLD);
-                final List<Moment> momentsList = new ArrayList<>();
+                Cursor data = dbHelper.searchEntries(RealmDatabaseHelper.RECENT_TO_OLD);
+                final List<MomentModel> momentsList = new ArrayList<>();
 
                 if (data != null) {
                     while (data.moveToNext()) {
@@ -463,7 +460,7 @@ new Thread(new Runnable() {
                         String title = data.getString(0);
                         String uri = data.getString(1);
                         Long date = data.getLong(2);
-                        Moment moment = new Moment(title, Uri.parse(uri), date);
+                        MomentModel moment = new MomentModel(title, Uri.parse(uri), date);
                         momentsList.add(moment);
                     }
                     data.close();

@@ -17,7 +17,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
-import com.monsoonblessing.moments.DatabaseHelper;
+import com.monsoonblessing.moments.RealmDatabaseHelper;
 import com.monsoonblessing.moments.R;
 import com.monsoonblessing.moments.SearchPreference;
 import com.monsoonblessing.moments.enums.SortingOptions;
@@ -57,7 +57,7 @@ public class SearchFragment extends Fragment {
     private String monthFilter;
     private String yearFilter;
     private String sortFilter;
-    private DatabaseHelper dbHelper;
+    private RealmDatabaseHelper dbHelper;
     private SharedPreferences mSharedPreferences;
     private Gson mGson;
     //load preconfigured search preference
@@ -85,7 +85,7 @@ public class SearchFragment extends Fragment {
             mSearchPreference = new SearchPreference();
         }
 
-        dbHelper = new DatabaseHelper(getActivity());
+        dbHelper = new RealmDatabaseHelper(getActivity());
 
         new QueryYearDropdownOptions().execute(); //set up years dropdown
 

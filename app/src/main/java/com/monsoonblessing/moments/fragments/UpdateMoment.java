@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import com.monsoonblessing.moments.DatabaseHelper;
+import com.monsoonblessing.moments.RealmDatabaseHelper;
 
 /**
  * Created by Kevin on 2016-06-20.
@@ -24,8 +24,8 @@ public class UpdateMoment extends MomentConfig {
 
 
     /*
-    1. Check if our Moment has a photo
-    2. Update our Moment with information user wants
+    1. Check if our MomentModel has a photo
+    2. Update our MomentModel with information user wants
     3. Check if we updated database successfully
      */
     @Override
@@ -33,7 +33,7 @@ public class UpdateMoment extends MomentConfig {
         if (mMoment.getPhotoUri() == null) {
             Toast.makeText(getActivity(), "Please choose a photo!", Toast.LENGTH_SHORT).show();
         } else {
-            //update Moment object
+            //update MomentModel object
             updateMomentFields();
             //make sure row was updated successfully
             if (updateRow()) {
@@ -44,7 +44,7 @@ public class UpdateMoment extends MomentConfig {
                 } catch (ClassCastException e) {
                     e.printStackTrace();
                 }
-                Toast.makeText(getActivity(), "Moment updated successfully~", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(), "MomentModel updated successfully~", Toast.LENGTH_LONG).show();
                 dismiss();
             } else {
                 Toast.makeText(getActivity(), "Error trying to update entry :/", Toast.LENGTH_LONG).show();
@@ -54,7 +54,7 @@ public class UpdateMoment extends MomentConfig {
 
 
     public boolean updateRow() {
-        DatabaseHelper dbHelper = new DatabaseHelper(getActivity());
+        RealmDatabaseHelper dbHelper = new RealmDatabaseHelper(getActivity());
         Boolean isUpdated = dbHelper.updateRow(
                 mMoment.getId(),
                 mMoment.getTitle(),

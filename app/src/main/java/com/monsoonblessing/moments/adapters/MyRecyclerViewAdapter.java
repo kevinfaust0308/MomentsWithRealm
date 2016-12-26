@@ -1,7 +1,6 @@
 package com.monsoonblessing.moments.adapters;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
@@ -11,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.monsoonblessing.moments.Moment;
+import com.monsoonblessing.moments.MomentModel;
 import com.monsoonblessing.moments.R;
 import com.squareup.picasso.Picasso;
 
@@ -19,7 +18,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 /**
  * Created by Kevin on 2016-06-15.
@@ -27,20 +25,20 @@ import java.util.Random;
 public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.MyViewHolder> {
 
     private Context mContext;
-    private List<Moment> mMoments;
+    private List<MomentModel> mMoments;
 
 
-    public MyRecyclerViewAdapter(Context context, List<Moment> moments) {
+    public MyRecyclerViewAdapter(Context context, List<MomentModel> moments) {
         mContext = context;
         mMoments = moments;
     }
 
 
-    public void updateData(List<Moment> moment) {
+    public void updateData(List<MomentModel> moment) {
         mMoments = moment;
     }
 
-    public Moment getData(int idx) {
+    public MomentModel getData(int idx) {
         return mMoments.get(idx);
     }
 
@@ -68,7 +66,7 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, final int position) {
-        final Moment moment = mMoments.get(position);
+        final MomentModel moment = mMoments.get(position);
 
         String title = moment.getTitle();
         Date dateObj = new Date(moment.getDate());

@@ -24,7 +24,7 @@ import com.monsoonblessing.moments.CalendarUtil;
 import com.monsoonblessing.moments.CurrentDate;
 import com.monsoonblessing.moments.FileCreator;
 import com.monsoonblessing.moments.FileUtils;
-import com.monsoonblessing.moments.Moment;
+import com.monsoonblessing.moments.MomentModel;
 import com.monsoonblessing.moments.Permissions;
 import com.monsoonblessing.moments.R;
 import com.squareup.picasso.Picasso;
@@ -51,7 +51,7 @@ public abstract class MomentConfig extends DialogFragment
     private static final int REQUEST_CHOOSE_PHOTO = 1;
     private static final int PREVIEW_PICTURE_LENGTH = 600;
     private static final int PREVIEW_PICTURE_WIDTH = 200;
-    protected Moment mMoment;
+    protected MomentModel mMoment;
     private ViewSwitcher mImageViewSwitcher;
     private EditText mTitleText;
     private LinearLayout mDatePicker;
@@ -79,7 +79,7 @@ public abstract class MomentConfig extends DialogFragment
         mRemovePhoto = (ImageButton) v.findViewById(R.id.remove_photo);
 
 
-        //checks if we are updating an existing Moment object or not
+        //checks if we are updating an existing MomentModel object or not
         Bundle bundle = getArguments();
         mMoment = (bundle != null) ? loadStoredMoment(bundle) : loadNewMoment();
 
@@ -130,9 +130,9 @@ public abstract class MomentConfig extends DialogFragment
 
 
     //returns a moment object with predefined settings if we are updating an entry
-    public Moment loadStoredMoment(Bundle bundle) {
+    public MomentModel loadStoredMoment(Bundle bundle) {
         //set preconfigured settings
-        Moment m = new Moment(bundle.getInt("id"),
+        MomentModel m = new MomentModel(bundle.getInt("id"),
                 bundle.getString("title"),
                 Uri.parse(bundle.getString("uri")),
                 bundle.getLong("date"));
@@ -142,7 +142,7 @@ public abstract class MomentConfig extends DialogFragment
 
 
     //sets the ui with predefined settings. called in loadStoredMoment
-    public void setUIFields(Moment moment) {
+    public void setUIFields(MomentModel moment) {
         //update UI with those settings
         addPreviewPicture(moment.getPhotoUri());
         mTitleText.setText(moment.getTitle());
@@ -152,8 +152,8 @@ public abstract class MomentConfig extends DialogFragment
     }
 
 
-    public Moment loadNewMoment() {
-        Moment m = new Moment();
+    public MomentModel loadNewMoment() {
+        MomentModel m = new MomentModel();
         CurrentDate cd = new CurrentDate();
         //set date text to display current date
         int num_month = cd.getMonth();
