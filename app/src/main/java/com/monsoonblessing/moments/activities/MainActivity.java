@@ -41,7 +41,7 @@ import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
 public class MainActivity extends AppCompatActivity
-        implements MomentConfig.OnSubmitListener, SearchFragment.OnFilterListener, SettingsDialog.OnDeleteListener {
+        implements SearchFragment.OnFilterListener, SettingsDialog.OnDeleteListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity
     private SearchFragment mSearchFragment;
     private SearchPreference mSearchPreference;
 
-    private RealmResults<MomentModel> mMoments;
+    private RealmResults<MomentModel> mMomentsRealmResults;
 
     private SharedPreferences mSharedPreferences;
 
@@ -92,27 +92,31 @@ public class MainActivity extends AppCompatActivity
             mSearchPreference = new SearchPreference();
         }
 
-        mMoments = RealmDatabaseHelper.searchEntries(mSearchPreference);
-        if (mMoments.size() == 0) {
+        mMomentsRealmResults = RealmDatabaseHelper.searchEntries(mSearchPreference);
+        if (mMomentsRealmResults.size() == 0) {
             //hide recyclerview and tell user there are no entries
             Log.d(TAG, "View switcher: " + mEntriesViewSwitcher);
             showNoEntryUI();
             mAdapter = new MyRecyclerViewAdapter(MainActivity.this, new ArrayList<MomentModel>(0));
         } else {
-            mAdapter = new MyRecyclerViewAdapter(MainActivity.this, mMoments);
+            // debugging. see all entries on launch
+            for (MomentModel m : mMomentsRealmResults) {
+                Log.d(TAG, m.toString());
+            }
+            mAdapter = new MyRecyclerViewAdapter(MainActivity.this, mMomentsRealmResults);
         }
         mRecyclerView.setAdapter(mAdapter);
 
 
-        mMoments.addChangeListener(new RealmChangeListener<RealmResults<MomentModel>>() {
+        // basically when we submit new entries, this listener will take care of everything
+        mMomentsRealmResults.addChangeListener(new RealmChangeListener<RealmResults<MomentModel>>() {
             @Override
             public void onChange(RealmResults<MomentModel> results) {
                 if (results.size() == 0) {
                     //hide recyclerview and tell user there are no entries
                     showNoEntryUI();
                 } else {
-                    mMoments = results;
-                    mAdapter.updateData(results);
+                    mAdapter.updateData(mMomentsRealmResults);
                     mAdapter.notifyDataSetChanged();
                     showEntryUI();
                 }
@@ -150,10 +154,10 @@ public class MainActivity extends AppCompatActivity
                 delete.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        Log.d(TAG, "Id to delete: " + moment.getId());
                         RealmDatabaseHelper.deleteRow(moment.getId());
                         mAdapter.removeData(position);
                         mAdapter.notifyItemRemoved(position);
-                        Log.d(TAG, "deleted moment with id of " + moment.getId());
                         if (mAdapter.getItemCount() == 0) {
                             Log.d(TAG, "No entries in our adapter. Updating no entry UI");
                             showNoEntryUI();
@@ -232,17 +236,6 @@ public class MainActivity extends AppCompatActivity
 
 
     /*
-    Called when we add/update an entry
-    Callback interface implementation. Declaration in CreateNewMoment.java
-    Re-sort and retrieve data and then update UI by updating the adapter
-    */
-    @Override
-    public void OnSubmit() {
-        showEntryUI();
-    }
-
-
-    /*
     Called when we filter our entries
     Callback interface implementation. Declaration in SearchFragment.java
     Re-sort and retrieve data and then update UI by updating the adapter
@@ -251,12 +244,12 @@ public class MainActivity extends AppCompatActivity
     public void OnFilter(SearchPreference searchPreference) {
         hideSearchFragment();
 
-        mMoments = RealmDatabaseHelper.searchEntries(searchPreference);
-        if (mMoments.size() == 0) {
+        mMomentsRealmResults = RealmDatabaseHelper.searchEntries(searchPreference);
+        if (mMomentsRealmResults.size() == 0) {
             //hide recyclerview and tell user there are no entries
             showNoEntryUI();
         } else {
-            mAdapter.updateData(mMoments);
+            mAdapter.updateData(mMomentsRealmResults);
             mAdapter.notifyDataSetChanged();
             showEntryUI();
         }

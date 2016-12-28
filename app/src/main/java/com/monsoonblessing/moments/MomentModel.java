@@ -23,13 +23,6 @@ public class MomentModel extends RealmObject {
     private int year;
 
 
-
-    public void setAllFields(int id, String title, String photoUri, Long dateLong, String month, int year) {
-        this.id = id;
-        setAllFields(title, photoUri, dateLong, month, year);
-    }
-
-
     public void setAllFields(String title, String photoUri, Long dateLong, String month, int year) {
         this.title = title;
         this.photoUri = photoUri;
@@ -96,5 +89,12 @@ public class MomentModel extends RealmObject {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Moment #" + getId() + " Title:" + getTitle() + " Photo uri: " + getPhotoUri()
+                + " Month: " + getMonth() + " Year: " + getYear();
     }
 }

@@ -18,17 +18,14 @@ public class FileCreator {
 
     private static final String TAG = FileCreator.class.getSimpleName();
 
-    public static File createNewImageFilee(Context context) {
-
-        File file = null;
+    public static File createNewImageFileInInternalAppDirectory(Context context) {
 
         //1. create a unique file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String fileName = "IMG_" + timeStamp;
         fileName += ".jpg";
 
-        file = new File(context.getFilesDir(), fileName);
-        return file;
+        return new File(context.getFilesDir(), fileName);
     }
 
     /**

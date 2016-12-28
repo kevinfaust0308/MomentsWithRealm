@@ -4,38 +4,50 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.monsoonblessing.moments.MomentModel;
 import com.monsoonblessing.moments.R;
-import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import io.realm.RealmResults;
 
 /**
  * Created by Kevin on 2016-06-15.
  */
 public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.MyViewHolder> {
 
+    private static final String TAG = "MyRecyclerViewAdapter";
+
     private Context mContext;
-    private List<MomentModel> mMoments;
+    private ArrayList<MomentModel> mMoments;
 
 
-    public MyRecyclerViewAdapter(Context context, List<MomentModel> moments) {
+    public MyRecyclerViewAdapter(Context context, RealmResults<MomentModel> moments) {
+        mContext = context;
+        mMoments = new ArrayList<>(moments);
+    }
+
+
+    public MyRecyclerViewAdapter(Context context, ArrayList<MomentModel> moments) {
         mContext = context;
         mMoments = moments;
     }
 
 
-    public void updateData(List<MomentModel> moment) {
-        mMoments = moment;
+    public void updateData(RealmResults<MomentModel> updatedRealmResults) {
+        mMoments = new ArrayList<>(updatedRealmResults);
     }
 
 
@@ -83,44 +95,14 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         holder.cardTitle.setTypeface(myTypeface);
         holder.cardDate.setTypeface(myTypeface);
 
+        Log.d(TAG, "Loading photo: " + moment.getPhotoUri());
         Uri uri = Uri.parse(moment.getPhotoUri());
 
-       /*String[] pics = {
-                "http://wolfhoundpub.com/wp-content/uploads/2014/12/Haeundae_Beach.jpg",
-                "http://s1.it.atcdn.net/wp-content/uploads/2015/08/6-Tokyo.jpg",
-                "http://3.bp.blogspot.com/-pzG_woL1Ufw/Ue4roDBxcHI/AAAAAAAACrg/2QyFqmXpQ40/s1600/banpo_rainbow_fountain-1920x1080.jpg",
-                "http://images.all-free-download.com/images/wallpapers_large/old_farm_wallpaper_landscape_nature_wallpaper_1439.jpg"
-        };
-
-        Random r = new Random();
-        int min = 0;
-        int max = pics.length - 1;
-
-
-        String temp = pics[(r.nextInt(max - min + 1) + min)];*/
-
-
-        Picasso.with(mContext)
+        Glide.with(mContext)
                 .load(uri)
-                .fit()
-                .centerCrop()
+                .fitCenter()
                 .placeholder(R.drawable.greyplaceholder)
                 .into(holder.cardImage);
-
-/*        holder.editText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UpdateMoment f = UpdateMoment.newInstance(moment.getId(), moment.getPhotoUri().toString(), moment.getTitle(), moment.getDate());
-                f.show(((Activity) mContext).getFragmentManager(), "addMoment");
-            }
-        });
-
-        holder.deleteText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });*/
     }
 
 

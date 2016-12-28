@@ -114,9 +114,9 @@ public class RealmDatabaseHelper {
             @Override
             public void execute(Realm realm) {
                 // create new row
-                MomentModel moment = realm.createObject(MomentModel.class);
+                MomentModel moment = realm.createObject(MomentModel.class, getNextPrimaryKeyValue());
                 // populate row with data
-                moment.setAllFields(getNextPrimaryKeyValue(), title, photoUri, date, month, year);
+                moment.setAllFields(title, photoUri, date, month, year);
             }
         });
         // close database
