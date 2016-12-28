@@ -1,11 +1,14 @@
 package com.monsoonblessing.moments;
 
-import com.monsoonblessing.moments.enums.SortingOptions;
+import com.monsoonblessing.moments.Enums.SortingOptions;
 
 /**
  * Created by Kevin on 2016-06-24.
  */
 public class SearchPreference {
+
+    public static final String DEFAULT_ALL_DATE_ENTRIES = "All";
+    public static final SortingOptions DEFAULT_SORT_ORDER = SortingOptions.ORDER_ADDED;
 
     private String mMonth;
     private String mYear;
@@ -13,9 +16,7 @@ public class SearchPreference {
 
 
     public SearchPreference() {
-        mMonth = null;
-        mYear = null;
-        mSortOption = SortingOptions.ORDER_ADDED;
+        setDefaultSearchSettings();
     }
 
 
@@ -26,10 +27,10 @@ public class SearchPreference {
     }
 
 
-    public void reset() {
-        mMonth = null;
-        mYear = null;
-        mSortOption = SortingOptions.ORDER_ADDED;
+    public void setDefaultSearchSettings() {
+        mMonth = DEFAULT_ALL_DATE_ENTRIES;
+        mYear = DEFAULT_ALL_DATE_ENTRIES;
+        mSortOption = DEFAULT_SORT_ORDER;
     }
 
 

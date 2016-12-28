@@ -1,8 +1,7 @@
-package com.monsoonblessing.moments.fragments;
+package com.monsoonblessing.moments.Fragments;
 
+import android.app.Dialog;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Toast;
 
 import com.monsoonblessing.moments.RealmDatabaseHelper;
 
@@ -14,56 +13,50 @@ public class UpdateMoment extends MomentConfig {
     public static UpdateMoment newInstance(int id, String photoUri, String title, Long date) {
         UpdateMoment f = new UpdateMoment();
         Bundle args = new Bundle();
-        args.putInt("id", id);
-        args.putString("uri", photoUri);
-        args.putString("title", title);
-        args.putLong("date", date);
+        args.putInt(RealmDatabaseHelper.COLUMN_ID, id);
+        args.putString(RealmDatabaseHelper.COLUMN_PHOTO_URI, photoUri);
+        args.putString(RealmDatabaseHelper.COLUMN_TITLE, title);
+        args.putLong(RealmDatabaseHelper.COLUMN_DATE_LONG, date);
         f.setArguments(args);
         return f;
     }
 
 
-    /*
-    1. Check if our MomentModel has a photo
-    2. Update our MomentModel with information user wants
-    3. Check if we updated database successfully
-     */
     @Override
-    public void onClick(View v) {
-        if (mMoment.getPhotoUri() == null) {
-            Toast.makeText(getActivity(), "Please choose a photo!", Toast.LENGTH_SHORT).show();
-        } else {
-            //update MomentModel object
-            updateMomentFields();
-            //make sure row was updated successfully
-            if (updateRow()) {
-                //callback to Main Activity to refresh adapter
-                try {
-                    OnSubmitListener l = (OnSubmitListener) getActivity();
-                    l.OnSubmit();
-                } catch (ClassCastException e) {
-                    e.printStackTrace();
-                }
-                Toast.makeText(getActivity(), "MomentModel updated successfully~", Toast.LENGTH_LONG).show();
-                dismiss();
-            } else {
-                Toast.makeText(getActivity(), "Error trying to update entry :/", Toast.LENGTH_LONG).show();
-            }
-        }
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+
+/*
+        isNewMoment = false;
+
+        Bundle bundle = getArguments();
+
+        // get preset settings
+        int id = bundle.getInt(RealmDatabaseHelper.COLUMN_ID);
+        String uri = bundle.getString(RealmDatabaseHelper.COLUMN_PHOTO_URI);
+        String title = bundle.getString(RealmDatabaseHelper.COLUMN_TITLE);
+        Long date = bundle.getLong(RealmDatabaseHelper.COLUMN_DATE_LONG);
+
+        // set preset settings
+        momentID = id;
+        momentPhotoUri = Uri.parse(uri);
+        momentDateLong = date;
+
+        // update title text
+        mTitleText.setText(title);
+
+        // update date text
+        Date dateObj = new Date(date);
+        SimpleDateFormat f = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+        mDateText.setText(f.format(dateObj));
+
+        // update preview picture
+        addPreviewPicture(momentPhotoUri);
+*/
+
+        // creates dialog
+        return super.onCreateDialog(savedInstanceState);
     }
 
 
-    public boolean updateRow() {
-        RealmDatabaseHelper dbHelper = new RealmDatabaseHelper(getActivity());
-        Boolean isUpdated = dbHelper.updateRow(
-                mMoment.getId(),
-                mMoment.getTitle(),
-                String.valueOf(mMoment.getPhotoUri()),
-                mMoment.getDate(),
-                mMoment.getMonth(),
-                mMoment.getYear());
-        dbHelper.closeDatabase();
-        return isUpdated;
-    }
 }
 

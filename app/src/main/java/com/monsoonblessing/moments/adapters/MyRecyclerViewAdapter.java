@@ -1,4 +1,4 @@
-package com.monsoonblessing.moments.adapters;
+package com.monsoonblessing.moments.Adapters;
 
 import android.content.Context;
 import android.graphics.Typeface;
@@ -38,16 +38,19 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         mMoments = moment;
     }
 
+
+    public void clearData() {
+        mMoments.clear();
+    }
+
+
     public MomentModel getData(int idx) {
         return mMoments.get(idx);
     }
 
+
     public void removeData(int idx) {
         mMoments.remove(idx);
-    }
-
-    public int getLengthOfData() {
-        return mMoments.size();
     }
 
 
@@ -69,7 +72,7 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         final MomentModel moment = mMoments.get(position);
 
         String title = moment.getTitle();
-        Date dateObj = new Date(moment.getDate());
+        Date dateObj = new Date(moment.getDateLong());
         SimpleDateFormat f = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
         String date = f.format(dateObj);
 
@@ -80,7 +83,7 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         holder.cardTitle.setTypeface(myTypeface);
         holder.cardDate.setTypeface(myTypeface);
 
-        Uri uri = moment.getPhotoUri();
+        Uri uri = Uri.parse(moment.getPhotoUri());
 
        /*String[] pics = {
                 "http://wolfhoundpub.com/wp-content/uploads/2014/12/Haeundae_Beach.jpg",

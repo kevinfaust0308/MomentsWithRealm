@@ -1,4 +1,6 @@
-package com.monsoonblessing.moments.enums;
+package com.monsoonblessing.moments.Enums;
+
+import com.monsoonblessing.moments.RealmDatabaseHelper;
 
 import io.realm.Sort;
 
@@ -6,9 +8,9 @@ import io.realm.Sort;
  * Created by Kevin on 2016-06-19.
  */
 public enum SortingOptions {
-    ORDER_ADDED("Order added", "id", Sort.DESCENDING),
-    RECENT_TO_OLD_DATE("Recent to old", "date", Sort.DESCENDING),
-    OLD_TO_RECENT_DATE("Old to recent", "date", Sort.ASCENDING);
+    ORDER_ADDED("Order added", RealmDatabaseHelper.COLUMN_ID, Sort.DESCENDING),
+    RECENT_TO_OLD_DATE("Recent to old", RealmDatabaseHelper.COLUMN_DATE_LONG, Sort.DESCENDING),
+    OLD_TO_RECENT_DATE("Old to recent", RealmDatabaseHelper.COLUMN_DATE_LONG, Sort.ASCENDING);
 
     private final String desc;
     private final String col;

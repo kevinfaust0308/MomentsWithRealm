@@ -1,22 +1,17 @@
-package com.monsoonblessing.moments.fragments;
+package com.monsoonblessing.moments.Fragments;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.IntentCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.Toast;
 
-import com.monsoonblessing.moments.CurrentDate;
 import com.monsoonblessing.moments.RealmDatabaseHelper;
 import com.monsoonblessing.moments.R;
 
@@ -50,7 +45,7 @@ public class SettingsDialog extends DialogFragment {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (delete_checkbox.isChecked()) {
-                    new DeleteAllEntries().execute();
+                    RealmDatabaseHelper.deleteAllEntries();
                 } else {
                     dismiss();
                 }
@@ -75,41 +70,4 @@ public class SettingsDialog extends DialogFragment {
         return b.create();
     }
 
-
-    private class DeleteAllEntries extends AsyncTask<Void, Void, Void> {
-
-        private ProgressDialog pd;
-        private long preTime;
-        private long postTime;
-
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            RealmDatabaseHelper dbHelper = new RealmDatabaseHelper(getActivity());
-            dbHelper.deleteAllEntries();
-            dbHelper.closeDatabase();
-            return null;
-        }
-
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            pd = new ProgressDialog(getActivity());
-            pd.setMessage("Please wait");
-            pd.show();
-            preTime = new CurrentDate().getCurrentLongDate();
-        }
-
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            postTime = new CurrentDate().getCurrentLongDate();
-            pd.dismiss();
-            Log.d(TAG, "It took " + (postTime - preTime) / 1000.0 + " seconds to delete all data from database");
-            Toast.makeText(getActivity(), "All entries have been deleted~", Toast.LENGTH_SHORT).show();
-            ((OnDeleteListener) getActivity()).OnDelete(); //update UI in main
-        }
-    }
 }

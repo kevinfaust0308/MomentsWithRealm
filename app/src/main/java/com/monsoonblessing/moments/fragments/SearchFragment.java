@@ -1,13 +1,10 @@
-package com.monsoonblessing.moments.fragments;
+package com.monsoonblessing.moments.Fragments;
 
 import android.app.Fragment;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,7 +17,7 @@ import com.google.gson.Gson;
 import com.monsoonblessing.moments.RealmDatabaseHelper;
 import com.monsoonblessing.moments.R;
 import com.monsoonblessing.moments.SearchPreference;
-import com.monsoonblessing.moments.enums.SortingOptions;
+import com.monsoonblessing.moments.Enums.SortingOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +31,7 @@ import butterknife.ButterKnife;
 public class SearchFragment extends Fragment {
 
     public interface OnFilterListener {
-        void OnFilter();
+        void OnFilter(SearchPreference searchPreference);
     }
 
     private static final String TAG = SearchFragment.class.getSimpleName();
@@ -57,9 +54,6 @@ public class SearchFragment extends Fragment {
     private String monthFilter;
     private String yearFilter;
     private String sortFilter;
-    private RealmDatabaseHelper dbHelper;
-    private SharedPreferences mSharedPreferences;
-    private Gson mGson;
     //load preconfigured search preference
     private SearchPreference mSearchPreference;
     //adapters
@@ -73,21 +67,17 @@ public class SearchFragment extends Fragment {
         View v = inflater.inflate(R.layout.search_layout, container, false);
         ButterKnife.bind(this, v);
 
-        mSharedPreferences = getActivity().getSharedPreferences("com.monsoonblessing.moments", Context.MODE_PRIVATE);
-        mGson = new Gson();
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("com.monsoonblessing.moments", Context.MODE_PRIVATE);
 
         //load preconfigured search preference
         //our fragment is only ever created once. so the prefs we have here won't change even if we modify it
-        String searchPreference = mSharedPreferences.getString("SearchPreference", null);
-        if (searchPreference != null) {
-            mSearchPreference = mGson.fromJson(searchPreference, SearchPreference.class);
+        String savedSearchPref = sharedPreferences.getString("SearchPreference", null);
+        if (savedSearchPref != null) {
+            mSearchPreference = new Gson().fromJson(savedSearchPref, SearchPreference.class);
         } else {
             mSearchPreference = new SearchPreference();
         }
 
-        dbHelper = new RealmDatabaseHelper(getActivity());
-
-        new QueryYearDropdownOptions().execute(); //set up years dropdown
 
         /*
         Set up adapter and make dropdown box select preconfigured settings (if any)
@@ -99,12 +89,8 @@ public class SearchFragment extends Fragment {
         monthsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
         mSpinnerMonth.setAdapter(monthsAdapter);
         //set selected month value. if we have a search preference use that, otherwise default to 'All'
-        monthFilter = (mSearchPreference.getMonth() == null) ? "All" : mSearchPreference.getMonth();
+        monthFilter = mSearchPreference.getMonth();
         mSpinnerMonth.setSelection(monthsAdapter.getPosition(monthFilter), false);
-
-
-        yearFilter = (mSearchPreference.getYear() == null) ? "All" : mSearchPreference.getYear();
-        //mSpinnerYear.setSelection(yearsAdapter.getPosition(yearFilter), false);
 
 
         //set up sort dropdown
@@ -116,6 +102,15 @@ public class SearchFragment extends Fragment {
         mSpinnerSort.setSelection(sortOptionsAdapter.getPosition(sortFilter), false);
 
 
+        // set up years dropdown
+        yearsAdapter = new ArrayAdapter<>(getActivity(), R.layout.textview, RealmDatabaseHelper.getYears());
+        yearsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
+        mSpinnerYear.setAdapter(yearsAdapter);
+        //set selected year value. when submitting, we store the year filter value
+        yearFilter = mSearchPreference.getYear();
+        mSpinnerYear.setSelection(yearsAdapter.getPosition(yearFilter), false);
+
+
         //updated search field variables, save in shared prefs, and reload UI
         mSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,17 +120,13 @@ public class SearchFragment extends Fragment {
                 sortFilter = mSpinnerSort.getSelectedItem().toString();
 
                 //if our selection is "All", then we store null (null = all when doing sql querying)
-                SearchPreference sp = new SearchPreference(
+                SearchPreference searchPref = new SearchPreference(
                         (monthFilter.equals("All")) ? null : monthFilter,
                         (yearFilter.equals("All")) ? null : yearFilter,
                         SortingOptions.getEnum(sortFilter)
                 );
 
-                Log.d(TAG, "Storing sort enum: " + SortingOptions.getEnum(sortFilter));
-
-                String pref = mGson.toJson(sp);
-                mSharedPreferences.edit().putString("SearchPreference", pref).apply();
-                ((OnFilterListener) getActivity()).OnFilter();
+                ((OnFilterListener) getActivity()).OnFilter(searchPref);
             }
         });
 
@@ -150,6 +141,16 @@ public class SearchFragment extends Fragment {
     }
 
 
+    public void updateYearDropdownOptions() {
+        yearsAdapter.clear();
+        yearsAdapter.addAll(RealmDatabaseHelper.getYears());
+        yearsAdapter.notifyDataSetChanged();
+
+        //set selected year value. when submitting, we store the year filter value
+        mSpinnerYear.setSelection(yearsAdapter.getPosition(yearFilter), false);
+    }
+
+
     public List<String> getSortingOptions() {
         List<String> list = new ArrayList<>();
         for (SortingOptions option : SortingOptions.values()) {
@@ -159,12 +160,7 @@ public class SearchFragment extends Fragment {
     }
 
 
-    public void refreshYearsDropdown() {
-        new QueryYearDropdownOptions().execute();
-    }
-
-
-    //when deleting all entries, reset the dropdown selection to defaults (year auto updates)
+    //when deleting all entries, setDefaultSearchSettings the dropdown selection to defaults (year auto updates)
     public void reset() {
         monthFilter = "All";
         mSpinnerMonth.setSelection(monthsAdapter.getPosition(monthFilter), false);
@@ -173,37 +169,4 @@ public class SearchFragment extends Fragment {
         mSpinnerSort.setSelection(sortOptionsAdapter.getPosition(sortFilter), false);
     }
 
-
-    //list of string years because we need "All" option as first
-    private class QueryYearDropdownOptions extends AsyncTask<Void, Void, List<String>> {
-
-        @Override
-        protected List<String> doInBackground(Void... params) {
-            Cursor cursor = dbHelper.getYears();
-
-            List<String> list = new ArrayList<>();
-            list.add("All"); //first option is always defaulted to "All"
-
-            if (cursor != null) {
-
-                while (cursor.moveToNext()) {
-                    list.add(cursor.getInt(0) + "");
-                }
-                cursor.close();
-            }
-            dbHelper.closeDatabase();
-            return list;
-        }
-
-
-        @Override
-        protected void onPostExecute(List<String> years) {
-            super.onPostExecute(years);
-            yearsAdapter = new ArrayAdapter<>(getActivity(), R.layout.textview, years);
-            yearsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
-            mSpinnerYear.setAdapter(yearsAdapter);
-            //set selected year value. when submitting, we store the year filter value
-            mSpinnerYear.setSelection(yearsAdapter.getPosition(yearFilter), false);
-        }
-    }
 }

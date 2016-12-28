@@ -104,7 +104,7 @@ public class PermissionManager {
                             "store camera images";
                     break;
                 case CAMERA_PERMISSION:
-                    message = "In order to take a picture with your device via this app, camera" +
+                    message = "In order to take a picture with your device via this app, camera " +
                             "permission is required";
                     break;
                 // other permissions can have different messages

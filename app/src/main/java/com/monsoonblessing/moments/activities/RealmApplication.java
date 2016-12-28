@@ -1,4 +1,4 @@
-package com.monsoonblessing.moments.activities;
+package com.monsoonblessing.moments.Activities;
 
 import android.app.Application;
 

@@ -1,4 +1,4 @@
-package com.monsoonblessing.moments.fragments;
+package com.monsoonblessing.moments.Fragments;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;

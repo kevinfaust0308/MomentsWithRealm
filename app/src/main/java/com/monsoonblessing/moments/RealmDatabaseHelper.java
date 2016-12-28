@@ -1,9 +1,9 @@
 package com.monsoonblessing.moments;
 
-import com.monsoonblessing.moments.enums.SortingOptions;
+import com.monsoonblessing.moments.Enums.SortingOptions;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmQuery;
@@ -28,18 +28,28 @@ public class RealmDatabaseHelper {
      * <p>Get all years of our entries</p>
      * <p>Used for drop down box of all available data year entries for filtering</p>
      */
-    public static Set<String> getYears() {
+    public static List<String> getYears() {
 
 
         Realm realm = Realm.getDefaultInstance();
 
-        // set to hold all unique years
-        Set<String> years = new LinkedHashSet<>();
+        // list to hold all unique years
+        List<String> years = new ArrayList<>();
+
+        // add "All" as first option
+        years.add("All");
 
         // get all the entries sorted by year old to new
-        SearchPreference searchPreference = new SearchPreference(null, null, SortingOptions.OLD_TO_RECENT_DATE);
+        SearchPreference searchPreference = new SearchPreference(
+                SearchPreference.DEFAULT_ALL_DATE_ENTRIES,
+                SearchPreference.DEFAULT_ALL_DATE_ENTRIES,
+                SortingOptions.OLD_TO_RECENT_DATE
+        );
         RealmResults<MomentModel> yearSortedResults = searchEntries(searchPreference);
-        // loop through each resut and add to our set
+        // get all distinct years
+        yearSortedResults = yearSortedResults.distinct(COLUMN_YEAR);
+
+        // loop through each resut and add to our list
         for (MomentModel moment : yearSortedResults) {
             years.add(String.valueOf(moment.getYear()));
         }
@@ -63,12 +73,14 @@ public class RealmDatabaseHelper {
         // Build the query looking at all users:
         RealmQuery<MomentModel> query = realm.where(MomentModel.class);
         // if we have a month filter, add that to the query
-        if (searchPreference.getMonth() != null) {
+        if (!searchPreference.getMonth().equals(SearchPreference.DEFAULT_ALL_DATE_ENTRIES)) {
             query.equalTo(COLUMN_MONTH, searchPreference.getMonth());
         }
         // if we have a year filter, add that to the query
-        if (searchPreference.getYear() != null) {
-            query.equalTo(COLUMN_YEAR, searchPreference.getYear());
+        if (!searchPreference.getYear().equals(SearchPreference.DEFAULT_ALL_DATE_ENTRIES)) {
+            // since we're not searching for "All" years, we have an integer year
+            int year = Integer.valueOf(searchPreference.getYear());
+            query.equalTo(COLUMN_YEAR, year);
         }
 
         // execute query for filtered results

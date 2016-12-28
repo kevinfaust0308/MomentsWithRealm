@@ -1,11 +1,9 @@
-package com.monsoonblessing.moments.fragments;
+package com.monsoonblessing.moments.Fragments;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -13,9 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
@@ -24,152 +20,231 @@ import com.monsoonblessing.moments.CalendarUtil;
 import com.monsoonblessing.moments.CurrentDate;
 import com.monsoonblessing.moments.FileCreator;
 import com.monsoonblessing.moments.FileUtils;
-import com.monsoonblessing.moments.MomentModel;
-import com.monsoonblessing.moments.Permissions;
+import com.monsoonblessing.moments.MetricUtils;
+import com.monsoonblessing.moments.PermissionManager;
 import com.monsoonblessing.moments.R;
+import com.monsoonblessing.moments.R2;
+import com.monsoonblessing.moments.RealmDatabaseHelper;
 import com.squareup.picasso.Picasso;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
+
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import static android.app.Activity.RESULT_OK;
+
 /**
  * Created by Kevin on 2016-06-21.
  */
 public abstract class MomentConfig extends DialogFragment
-        implements DatePickerFragment.OnDateChosenListener, View.OnClickListener {
+        implements DatePickerFragment.OnDateChosenListener {
+
+    private static final String TAG = MomentConfig.class.getSimpleName();
+
+    @BindView(R.id.image_view_switcher)
+    ViewSwitcher mImageViewSwitcher;
+    @BindView(R.id.title_text)
+    EditText mTitleText;
+    @BindView(R.id.image_chosen)
+    ImageView mImage;
+    @BindView(R.id.date_text)
+    TextView mDateText;
 
     public interface OnSubmitListener {
         void OnSubmit();
     }
 
-    private static final String TAG = MomentConfig.class.getSimpleName();
-    private static final int REQUEST_TAKE_PHOTO = 0;
-    private static final int REQUEST_CHOOSE_PHOTO = 1;
+    private static final int CAMERA_REQUEST_CODE = 0;
+    private static final int GALLERY_REQUEST_CODE = 1;
     private static final int PREVIEW_PICTURE_LENGTH = 600;
     private static final int PREVIEW_PICTURE_WIDTH = 200;
-    protected MomentModel mMoment;
-    private ViewSwitcher mImageViewSwitcher;
-    private EditText mTitleText;
-    private LinearLayout mDatePicker;
-    private ImageView mImage;
-    private TextView mDateText;
-    private ImageButton mSubmit;
-    private ImageButton mCameraButton;
-    private ImageButton mGalleryButton;
-    private ImageButton mRemovePhoto;
+
+    // keep track of whether we are creating or updating a moment
+    protected boolean isNewMoment;
+    protected int momentID;
+
+    protected Uri momentPhotoUri;
+    protected Long momentDateLong;
+    protected String momentMonth;
+    protected int momentYear;
 
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
-
         View v = LayoutInflater.from(getActivity()).inflate(R.layout.new_moment, null);
-        mImageViewSwitcher = (ViewSwitcher) v.findViewById(R.id.image_view_switcher);
-        mTitleText = (EditText) v.findViewById(R.id.title_text);
-        mDatePicker = (LinearLayout) v.findViewById(R.id.choose_date);
-        mImage = (ImageView) v.findViewById(R.id.image_chosen);
-        mDateText = (TextView) v.findViewById(R.id.date_text);
-        mSubmit = (ImageButton) v.findViewById(R.id.submit);
-        mCameraButton = (ImageButton) v.findViewById(R.id.camera_button);
-        mGalleryButton = (ImageButton) v.findViewById(R.id.gallery_button);
-        mRemovePhoto = (ImageButton) v.findViewById(R.id.remove_photo);
-
-
-        //checks if we are updating an existing MomentModel object or not
-        Bundle bundle = getArguments();
-        mMoment = (bundle != null) ? loadStoredMoment(bundle) : loadNewMoment();
-
-        mCameraButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //check if we have a camera
-                if (getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
-                    // this device has a camera
-                    boolean permissionCheck = Permissions.checkCameraPermission(getActivity());
-                    Log.d(TAG, "Camera permission status: " + permissionCheck);
-                    if (permissionCheck) {
-                        storePhotoFromCamera();
-                    }
-                } else {
-                    // no camera on this device
-                    Toast.makeText(getActivity(), "No camera available :(", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        mGalleryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean permissionCheck = Permissions.checkReadPermission(getActivity());
-                Log.d(TAG, "Gallery Permission status: " + permissionCheck);
-                if (permissionCheck) {
-                    choosePhotoFromGallery();
-                }
-            }
-        });
-        mRemovePhoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                removePreviewPicture();
-            }
-        });
-        mSubmit.setOnClickListener(this); //implemented in subclasses
-        mDatePicker.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showDatePickerDialog();
-            }
-        });
-
+        ButterKnife.bind(this, v);
         b.setView(v);
+
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            isNewMoment = false;
+
+            // get preset settings
+            momentID = bundle.getInt(RealmDatabaseHelper.COLUMN_ID);
+            momentPhotoUri = Uri.parse(bundle.getString(RealmDatabaseHelper.COLUMN_PHOTO_URI));
+            momentDateLong = bundle.getLong(RealmDatabaseHelper.COLUMN_DATE_LONG);
+            String title = bundle.getString(RealmDatabaseHelper.COLUMN_TITLE);
+
+            // update title text
+            mTitleText.setText(title);
+
+            // update date text
+            Date dateObj = new Date(momentDateLong);
+            SimpleDateFormat f = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+            mDateText.setText(f.format(dateObj));
+
+            // update preview picture
+            addPreviewPicture(momentPhotoUri);
+        } else {
+            isNewMoment = true;
+
+            // set preset settings
+            momentPhotoUri = null;
+            CurrentDate cd = new CurrentDate();
+            // make date long contain current date
+            momentDateLong = cd.getCurrentLongDate();
+
+            // update date text
+            setDateTextView(cd.getYear(), cd.getMonth(), cd.getDay());
+        }
+
         return b.create();
     }
 
 
-    //returns a moment object with predefined settings if we are updating an entry
-    public MomentModel loadStoredMoment(Bundle bundle) {
-        //set preconfigured settings
-        MomentModel m = new MomentModel(bundle.getInt("id"),
-                bundle.getString("title"),
-                Uri.parse(bundle.getString("uri")),
-                bundle.getLong("date"));
-        setUIFields(m);
-        return m;
+    @OnClick(R2.id.submit)
+    void onSubmit() {
+        if (hasPhoto()) {
+            //date string to Long
+            String dateText = mDateText.getText().toString();
+            SimpleDateFormat f = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+            Calendar calendar = Calendar.getInstance();
+
+            try {
+                Date date = f.parse(dateText);
+                calendar.setTime(date);
+                //store date
+                momentDateLong = calendar.getTimeInMillis();
+                momentMonth = CalendarUtil.monthNumberToText(calendar.get(Calendar.MONTH));
+                momentYear = calendar.get(Calendar.YEAR);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            if (isNewMoment) {
+                // insert row
+                RealmDatabaseHelper.insertNewMomentIntoDB(mTitleText.getText().toString(), momentPhotoUri.toString(), momentDateLong, momentMonth, momentYear);
+            } else {
+                // update row
+                RealmDatabaseHelper.updateRow(momentID, mTitleText.getText().toString(), momentPhotoUri.toString(), momentDateLong, momentMonth, momentYear);
+            }
+
+            // let mainactivity know about this
+            ((OnSubmitListener) getActivity()).OnSubmit();
+        }
     }
 
 
-    //sets the ui with predefined settings. called in loadStoredMoment
-    public void setUIFields(MomentModel moment) {
-        //update UI with those settings
-        addPreviewPicture(moment.getPhotoUri());
-        mTitleText.setText(moment.getTitle());
-        Date dateObj = new Date(moment.getDate());
-        SimpleDateFormat f = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-        mDateText.setText(f.format(dateObj));
+    ;
+
+
+    @OnClick(R2.id.choose_date)
+    void onChooseData() {
+        showDatePickerDialog();
     }
 
 
-    public MomentModel loadNewMoment() {
-        MomentModel m = new MomentModel();
-        CurrentDate cd = new CurrentDate();
-        //set date text to display current date
-        int num_month = cd.getMonth();
-        String text_month = CalendarUtil.monthNumberToText(num_month);
-        //store the date. this will determine what date the date popup selector will show
-        m.setDate(cd.getCurrentLongDate());
-        m.setMonth(text_month);
-        m.setYear(cd.getYear());
-        //update date text
-        mDateText.setText(String.format(Locale.getDefault(),
-                "%s %d, %d",
-                text_month, //month is 0 index based
-                cd.getDay(),
-                cd.getYear())
-        );
-        return m;
+    @OnClick(R2.id.camera_button)
+    void onCameraSelect() {
+        //check if we have a camera
+        boolean hasCameraPermission = PermissionManager.hasCameraPermission(getActivity());
+        //check if we can access storage
+        boolean hasExternalStoragePermission = PermissionManager.hasExternalStoragePermission(getActivity());
+
+        if (!hasCameraPermission) {
+            // request for the permission
+            PermissionManager.requestCameraPermission(getActivity());
+        } else if (!hasExternalStoragePermission) {
+            // request for the permission
+            PermissionManager.requestExternalStoragePermission(getActivity());
+        }
+        // if we have both permissions then launch camera
+        else {
+            storePhotoFromCamera();
+        }
+
+    }
+
+
+    @OnClick(R2.id.gallery_button)
+    void onGallerySelect() {
+        //check if we can access storage
+        boolean hasExternalStoragePermission = PermissionManager.hasExternalStoragePermission(getActivity());
+
+        if (!hasExternalStoragePermission) {
+            // request for the permission
+            PermissionManager.requestExternalStoragePermission(getActivity());
+        } else {
+            choosePhotoFromGallery();
+        }
+    }
+
+
+    @OnClick(R2.id.remove_photo)
+    void onRemove() {
+        removePreviewPicture();
+    }
+
+
+    public boolean hasPhoto() {
+        boolean has = true;
+        if (momentPhotoUri == null) {
+            Toast.makeText(getActivity(), "Please choose a photo!", Toast.LENGTH_SHORT).show();
+            has = false;
+        }
+        return has;
+    }
+
+
+    public void storePhotoFromCamera() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = FileCreator.createNewImageFile();
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                momentPhotoUri = Uri.fromFile(photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, momentPhotoUri);
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
+            } else {
+                momentPhotoUri = null;
+                Toast.makeText(getActivity(),
+                        "There was a problem creating the image file",
+                        Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(getActivity(), "Unable to reach camera app", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    public void choosePhotoFromGallery() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, GALLERY_REQUEST_CODE);
     }
 
 
@@ -177,7 +252,7 @@ public abstract class MomentConfig extends DialogFragment
     Remove image selector and replace with preview of photo chosen
     */
     public void addPreviewPicture(Uri imagePath) {
-        mImageViewSwitcher.showNext();
+        mImageViewSwitcher.setDisplayedChild(1);
         Picasso.with(getActivity())
                 .load(imagePath)
                 .resize(PREVIEW_PICTURE_LENGTH, PREVIEW_PICTURE_WIDTH)
@@ -191,62 +266,23 @@ public abstract class MomentConfig extends DialogFragment
      */
     public void removePreviewPicture() {
         mImageViewSwitcher.setDisplayedChild(0);
-        mMoment.setPhotoUri(null);
-    }
-
-
-    //used for submission
-    public void updateMomentFields() {
-        //date string to Long
-        String dateText = mDateText.getText().toString();
-        SimpleDateFormat f = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-        Calendar calendar = Calendar.getInstance();
-
-        try {
-            Date date = f.parse(dateText);
-            calendar.setTime(date);
-            //store date
-            mMoment.setDate(calendar.getTimeInMillis());
-            mMoment.setMonth(CalendarUtil.monthNumberToText(calendar.get(Calendar.MONTH)));
-            mMoment.setYear(calendar.get(Calendar.YEAR));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        //store title
-        String title = mTitleText.getText().toString();
-        mMoment.setTitle(title);
-    }
-
-
-    public void storePhotoFromCamera() {
-        File f = FileCreator.createNewImageFile(getActivity());
-
-        if (f != null) {
-            Uri newPhotoUri = Uri.fromFile(f);
-            mMoment.setPhotoUri(newPhotoUri);
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, newPhotoUri);
-            startActivityForResult(intent, REQUEST_TAKE_PHOTO);
-            //TODO: BUG: if user clicks camera but then exits, the uri image file is created although empty. thus submitting works
-        } else {
-            mMoment.setPhotoUri(null);
-            Toast.makeText(getActivity(),
-                    "There was a problem accessing your device's external storage",
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-    public void choosePhotoFromGallery() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        startActivityForResult(intent, REQUEST_CHOOSE_PHOTO);
+        momentPhotoUri = null;
     }
 
 
     public void showDatePickerDialog() {
-        DialogFragment frag = DatePickerFragment.newInstance(mMoment.getDate());
+        DialogFragment frag = DatePickerFragment.newInstance(momentDateLong);
         frag.show(getFragmentManager(), "datePicker");
+    }
+
+
+    public void setDateTextView(int year, int month, int day) {
+        mDateText.setText(String.format(Locale.getDefault(),
+                "%s %d, %d",
+                CalendarUtil.monthNumberToText(month), //month is 0 index based
+                day,
+                year)
+        );
     }
 
 
@@ -256,12 +292,7 @@ public abstract class MomentConfig extends DialogFragment
     */
     @Override
     public void OnDateChose(int year, int month, int day) {
-        mDateText.setText(String.format(Locale.getDefault(),
-                "%s %d, %d",
-                CalendarUtil.monthNumberToText(month), //month is 0 index based
-                day,
-                year)
-        );
+        setDateTextView(year, month, day);
     }
 
 
@@ -274,17 +305,17 @@ public abstract class MomentConfig extends DialogFragment
 
         Log.d(TAG, "request code: " + requestCode + ", result code: " + resultCode);
 
-        //if we are coming back to the fragment from taking/choosing a pic
-        if (resultCode == Activity.RESULT_OK) {
+/*        //if we are coming back to the fragment from taking/choosing a pic
+        if (resultCode == RESULT_OK) {
 
-            if (requestCode == REQUEST_CHOOSE_PHOTO) {
-                /*
+            if (requestCode == GALLERY_REQUEST_CODE) {
+                *//*
                 If we took a picture, the passed in data will be null
                 --> camera photo placed in the specified file when starting the intent
                 --> we stored the uri to our camera variable
 
                 If we chose a picture, the passed in data will ba uri to content provider location
-                 */
+                 *//*
                 if (data != null) {
 
                     Uri selectedImage = data.getData();
@@ -296,9 +327,56 @@ public abstract class MomentConfig extends DialogFragment
                 }
             }
             addPreviewPicture(mMoment.getPhotoUri());
-        }
-    }
+        }*/
 
+
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE:
+                    Uri croppedImgUri = CropImage.getActivityResult(data).getUri();
+                    Log.d(TAG, "Cropped pic uri: " + croppedImgUri.toString());
+
+                    // cropped image file location (somewhere in cache)
+                    File tempCroppedImage = new File(croppedImgUri.toString());
+
+                    // create new image file in an album which will long-term store this cropped image
+                    File newFile = FileCreator.createNewImageFilee(getActivity());
+                    Log.d(TAG, "Size of this new empty file: " + newFile.length());
+                    Log.d(TAG, "Newly created file in album which will contain image (abs path): " + newFile.getAbsolutePath());
+
+
+                    // move the temp file to our long-term
+                    FileUtils.moveFile(tempCroppedImage.getAbsolutePath(), tempCroppedImage.getName(), getActivity().getFilesDir().getAbsolutePath());
+
+                    Log.d(TAG, "Cropped file has been moved: " + newFile.length());
+
+                    // update profile pic and uri variable to the cropped image
+                    addPreviewPicture(croppedImgUri);
+                    //momentPhotoUri = Uri.fromFile(newFile);
+                    break;
+
+                case GALLERY_REQUEST_CODE:
+                    // get the uri of the chosen picture
+                    Uri selectPicUri = data.getData();
+                    Log.d(TAG, "Selected pic uri: " + selectPicUri.toString());
+
+                    // crop the selected picture
+                    Intent intent = CropImage.activity(selectPicUri)
+                            .setGuidelines(CropImageView.Guidelines.ON)
+                            .setAspectRatio(2, 1)
+                            .getIntent(getActivity());
+                    startActivityForResult(intent, CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE);
+                    break;
+            }
+        }
+
+
+    }
 }
+
+
+
+
+
 
 

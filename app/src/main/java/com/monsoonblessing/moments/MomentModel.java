@@ -3,6 +3,7 @@ package com.monsoonblessing.moments;
 import android.net.Uri;
 
 import io.realm.RealmObject;
+import io.realm.annotations.Index;
 import io.realm.annotations.PrimaryKey;
 
 /**
@@ -17,7 +18,10 @@ public class MomentModel extends RealmObject {
     private String photoUri;
     private Long dateLong;
     private String month;
+
+    @Index
     private int year;
+
 
 
     public void setAllFields(int id, String title, String photoUri, Long dateLong, String month, int year) {
