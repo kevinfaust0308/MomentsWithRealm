@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:background="?colorPrimary"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:background="?colorPrimary"
               android:gravity="center"
               android:orientation="vertical"
-              android:paddingBottom="15dp"
-              android:paddingTop="15dp">
+              android:padding="20dp">
 
 
     <ViewSwitcher
@@ -15,6 +14,7 @@
         android:layout_height="wrap_content"
         android:measureAllChildren="false">
 
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -22,41 +22,42 @@
             android:orientation="vertical">
 
             <TextView
-                android:textColor="@color/md_white_1000"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Choose image"
+                android:textColor="@color/md_white_1000"
                 android:textSize="16sp"/>
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="5dp"
                 android:gravity="center_horizontal"
                 android:orientation="horizontal">
 
                 <ImageButton
-                    android:tint="@color/md_white_1000"
                     android:id="@+id/camera_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:layout_marginRight="10dp"
                     android:background="#00000000"
-                    android:src="@drawable/ic_photo_camera_black_48dp"/>
+                    android:padding="8dp"
+                    android:src="@drawable/ic_photo_camera_black_48dp"
+                    android:tint="@color/md_white_1000"/>
 
                 <ImageButton
-                    android:tint="@color/md_white_1000"
                     android:id="@+id/gallery_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="#00000000"
-                    android:src="@drawable/ic_photo_black_48dp"/>
+                    android:padding="8dp"
+                    android:src="@drawable/ic_photo_black_48dp"
+                    android:tint="@color/md_white_1000"/>
 
             </LinearLayout>
 
         </LinearLayout>
 
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -66,27 +67,28 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Image preview"/>
+                android:text="Image preview"
+                android:textColor="@color/md_white_1000"
+                android:textSize="16sp"/>
 
             <FrameLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
 
                 <ImageView
                     android:id="@+id/image_chosen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"/>
+                    android:scaleType="centerCrop"/>
 
                 <ImageButton
                     android:id="@+id/remove_photo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
+                    android:layout_gravity="right"
                     android:background="#00000000"
-                    android:paddingEnd="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="10dp"
+                    android:padding="5dp"
                     android:src="@drawable/ic_remove_circle_black_18dp"
                     android:tint="@color/md_red_500"/>
             </FrameLayout>
@@ -98,28 +100,28 @@
 
 
     <TextView
-        android:textColor="@color/md_white_1000"
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:text="Title"
+        android:textColor="@color/md_white_1000"
         android:textSize="16sp"/>
 
     <EditText
-        android:textColor="@color/md_white_1000"
         android:id="@+id/title_text"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
+        android:maxLength="75"
         android:maxLines="3"
-        android:maxLength="75"/>
+        android:textColor="@color/md_white_1000"/>
 
     <TextView
-        android:textColor="@color/md_white_1000"
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Date"
+        android:textColor="@color/md_white_1000"
         android:textSize="16sp"/>
 
     <LinearLayout
@@ -131,33 +133,33 @@
 
 
         <ImageButton
-            android:tint="@color/md_white_1000"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="3dp"
             android:layout_marginRight="3dp"
             android:background="#00000000"
             android:clickable="false"
-            android:src="@drawable/ic_date_range_black_18dp"/>
+            android:src="@drawable/ic_date_range_black_18dp"
+            android:tint="@color/md_white_1000"/>
 
         <TextView
-            android:textColor="@color/md_white_1000"
             android:id="@+id/date_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="June 15, 2016"/>
+            android:text="June 15, 2016"
+            android:textColor="@color/md_white_1000"/>
 
     </LinearLayout>
 
 
     <ImageButton
-        android:tint="@color/md_white_1000"
         android:id="@+id/submit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:background="#00000000"
         android:padding="10dp"
-        android:src="@drawable/ic_check_black_24dp"/>
+        android:src="@drawable/ic_check_black_24dp"
+        android:tint="@color/md_white_1000"/>
 
 </LinearLayout>

@@ -1,7 +1,10 @@
 package com.monsoonblessing.moments;
 
+import android.util.Log;
+
 import com.monsoonblessing.moments.Enums.SortingOptions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -165,6 +168,13 @@ public class RealmDatabaseHelper {
 
                 // get the row with the specified id
                 MomentModel moment = realm.where(MomentModel.class).equalTo(COLUMN_ID, id).findFirst();
+
+                // get the image file of this moment
+                File imageFile = new File(moment.getPhotoUri());
+                if (imageFile.delete()) {
+                    Log.d(TAG, "Picture file of moment #" + moment.getId() + " deleted");
+                }
+
                 // delete the row
                 moment.deleteFromRealm();
 
@@ -175,9 +185,9 @@ public class RealmDatabaseHelper {
     }
 
 
-    /**
+/*    *//**
      * Delete all entries
-     */
+     *//*
     public static void deleteAllEntries() {
         Realm realm = Realm.getDefaultInstance();
         realm.executeTransaction(new Realm.Transaction() {
@@ -193,7 +203,7 @@ public class RealmDatabaseHelper {
         });
         // close database
         realm.close();
-    }
+    }*/
 
 
     /**

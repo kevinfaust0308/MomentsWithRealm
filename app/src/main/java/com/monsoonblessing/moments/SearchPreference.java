@@ -27,7 +27,7 @@ public class SearchPreference {
     }
 
 
-    public void setDefaultSearchSettings() {
+    private void setDefaultSearchSettings() {
         mMonth = DEFAULT_ALL_DATE_ENTRIES;
         mYear = DEFAULT_ALL_DATE_ENTRIES;
         mSortOption = DEFAULT_SORT_ORDER;

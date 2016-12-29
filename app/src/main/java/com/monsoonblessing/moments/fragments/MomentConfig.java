@@ -30,7 +30,6 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 
 
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -67,17 +66,28 @@ public abstract class MomentConfig extends DialogFragment
     private static final int PREVIEW_PICTURE_WIDTH = 400;
 
     // keep track of whether we are creating or updating a moment
-    protected boolean isNewMoment;
+    protected boolean isNewMoment = false;
     protected int momentID;
 
-    // file creation maintainer
-    // when changing user changes the picture to use or exits this fragment, we don't want to keep the image file stored
-    private File momentPhotoFile;
+    // file path of the chosen image
+    protected String chosenPhotoFilePath;
 
-    protected Uri momentPhotoUri;
     protected Long momentDateLong;
     protected String momentMonth;
     protected int momentYear;
+
+    // boolean submitted new entry
+    boolean submittedEntry = false; // delete image file if this is false
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            Log.d(TAG, "Dismissing");
+            dismiss();
+        }
+    }
 
 
     @Override
@@ -88,12 +98,11 @@ public abstract class MomentConfig extends DialogFragment
         b.setView(v);
 
         Bundle bundle = getArguments();
-        if (bundle != null) {
-            isNewMoment = false;
 
+        if (bundle != null) {
             // get preset settings
             momentID = bundle.getInt(RealmDatabaseHelper.COLUMN_ID);
-            momentPhotoUri = Uri.parse(bundle.getString(RealmDatabaseHelper.COLUMN_PHOTO_URI));
+            chosenPhotoFilePath = bundle.getString(RealmDatabaseHelper.COLUMN_PHOTO_URI);
             momentDateLong = bundle.getLong(RealmDatabaseHelper.COLUMN_DATE_LONG);
             String title = bundle.getString(RealmDatabaseHelper.COLUMN_TITLE);
 
@@ -106,12 +115,11 @@ public abstract class MomentConfig extends DialogFragment
             mDateText.setText(f.format(dateObj));
 
             // update preview picture
-            addPreviewPicture(momentPhotoUri);
+            addPreviewPicture(chosenPhotoFilePath);
         } else {
             isNewMoment = true;
 
             // set preset settings
-            momentPhotoUri = null;
             CurrentDate cd = new CurrentDate();
             // make date long contain current date
             momentDateLong = cd.getCurrentLongDate();
@@ -120,6 +128,7 @@ public abstract class MomentConfig extends DialogFragment
             setDateTextView(cd.getYear(), cd.getMonth(), cd.getDay());
         }
 
+        // creates dialog
         return b.create();
     }
 
@@ -128,12 +137,13 @@ public abstract class MomentConfig extends DialogFragment
     public void onDismiss(DialogInterface dialog) {
         super.onDismiss(dialog);
         Log.d(TAG, MomentConfig.class.getSimpleName() + " is being dismissed");
-        // delete the file that we created for the image
-        // since we are exiting, their is no point to keep the image which takes up disk space
-        // check if a a picture was selected and preview was not removed
-        if (momentPhotoFile != null) {
+
+        // if we are not submitting entry, we may or may not have chosen a image
+        // we only care about scenario when they did (to delete it)
+        if (chosenPhotoFilePath != null && !submittedEntry) {
+            File f = new File(chosenPhotoFilePath);
             // delete it
-            if (momentPhotoFile.delete()) {
+            if (f.delete()) {
                 Log.d(TAG, "Picture file associated with preview picture deleted");
             }
         }
@@ -162,19 +172,20 @@ public abstract class MomentConfig extends DialogFragment
 
             if (isNewMoment) {
                 // insert row
-                RealmDatabaseHelper.insertNewMomentIntoDB(mTitleText.getText().toString(), momentPhotoUri.toString(), momentDateLong, momentMonth, momentYear);
+                RealmDatabaseHelper.insertNewMomentIntoDB(mTitleText.getText().toString(), chosenPhotoFilePath, momentDateLong, momentMonth, momentYear);
             } else {
                 // update row
-                RealmDatabaseHelper.updateRow(momentID, mTitleText.getText().toString(), momentPhotoUri.toString(), momentDateLong, momentMonth, momentYear);
+                RealmDatabaseHelper.updateRow(momentID, mTitleText.getText().toString(), chosenPhotoFilePath, momentDateLong, momentMonth, momentYear);
             }
 
+            submittedEntry = true; // now ondismiss wont delete this image file
             dismiss();
         }
     }
 
 
     @OnClick(R2.id.choose_date)
-    void onChooseData() {
+    void onChooseDate() {
         showDatePickerDialog();
     }
 
@@ -217,13 +228,13 @@ public abstract class MomentConfig extends DialogFragment
 
     @OnClick(R2.id.remove_photo)
     void onRemove() {
-        removePreviewPicture();
+        removePreviewPictureAndDeleteImageFile();
     }
 
 
     public boolean hasPhoto() {
         boolean has = true;
-        if (momentPhotoUri == null) {
+        if (chosenPhotoFilePath == null) {
             Toast.makeText(getActivity(), "Please choose a photo!", Toast.LENGTH_SHORT).show();
             has = false;
         }
@@ -253,10 +264,10 @@ public abstract class MomentConfig extends DialogFragment
     /*
     Remove image selector and replace with preview of photo chosen
     */
-    public void addPreviewPicture(Uri imagePath) {
+    public void addPreviewPicture(String imageFilePath) {
         mImageViewSwitcher.setDisplayedChild(1);
         Glide.with(this)
-                .load(imagePath)
+                .load(imageFilePath)
                 .fitCenter()
                 .override(PREVIEW_PICTURE_LENGTH, PREVIEW_PICTURE_WIDTH)
                 .centerCrop()
@@ -267,12 +278,15 @@ public abstract class MomentConfig extends DialogFragment
     /*
     Remove preview of image and delete that stored image file and show image selector screen again
      */
-    public void removePreviewPicture() {
-        mImageViewSwitcher.setDisplayedChild(0);
-        momentPhotoUri = null;
+    public void removePreviewPictureAndDeleteImageFile() {
+        // in order to get here we must have chosen a picture so chosen image file path is not null
+        File f = new File(chosenPhotoFilePath);
+
         // delete the file that we created for the image
-        if (momentPhotoFile.delete()) {
+        if (f.delete()) {
             Log.d(TAG, "Picture file associated with preview picture deleted");
+            mImageViewSwitcher.setDisplayedChild(0);
+            chosenPhotoFilePath = null;
         }
     }
 
@@ -316,42 +330,53 @@ public abstract class MomentConfig extends DialogFragment
             switch (requestCode) {
                 case CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE:
                     Uri croppedImgUri = CropImage.getActivityResult(data).getUri();
-                    Log.d(TAG, "Cropped pic uri: " + croppedImgUri.toString());
+                    Log.d(TAG, "Cropped pic uri: " + croppedImgUri.getPath());
 
-                    // cropped image file location (somewhere in cache)
-                    File cachedCropImageFile = new File(croppedImgUri.getPath());
-                    Log.d(TAG, "Size of this cropped image file: " + cachedCropImageFile.length());
+                    // cropped image file location (in app cache)
+                    String cachedCropImageFilePath = croppedImgUri.getPath();
 
-                    // create empty image file in internal storage
-                    momentPhotoFile = FileCreator.createNewImageFileInInternalAppDirectory(getActivity());
-                    Log.d(TAG, "Size of this new empty file: " + momentPhotoFile.length());
-                    Log.d(TAG, "Newly created file abs path: " + momentPhotoFile.getAbsolutePath());
-
-                    // move the cached crop image file to the app's internal storage (no need to delete because we moved it)
-                    if (cachedCropImageFile.renameTo(momentPhotoFile)) {
-                        Log.d(TAG, "Successfully moved file");
-                    } else {
-                        Log.d(TAG, "Failed to moved file");
-                    }
-
-                    Log.d(TAG, "Cropped file has been moved (size of it now): " + momentPhotoFile.length());
+                    // move temporary image file to internal storage
+                    chosenPhotoFilePath = moveAppCacheFileToInternalStorage(cachedCropImageFilePath);
 
                     // update profile pic and uri variable to the cropped image
-                    addPreviewPicture(Uri.fromFile(momentPhotoFile));
-                    momentPhotoUri = Uri.fromFile(momentPhotoFile);
-                    Log.d(TAG, "Moment photo uri: " + Uri.fromFile(momentPhotoFile));
+                    addPreviewPicture(chosenPhotoFilePath);
+                    Log.d(TAG, "Moment photo file (absPath/filePath): " + chosenPhotoFilePath);
                     break;
 
                 case MEDIA_REQUEST_CODE:
                     // get the uri of the chosen picture/camera picture
                     Uri mediaPicUri = data.getData();
-                    Log.d(TAG, "Selected pic uri: " + mediaPicUri.toString());
+                    Log.d(TAG, "Selected pic uri: " + mediaPicUri.getPath());
 
                     // crop the selected picture
                     launchCropImageActivity(mediaPicUri);
                     break;
             }
         }
+    }
+
+
+    public String moveAppCacheFileToInternalStorage(String cacheImageFilePath) {
+
+        File cachedCropImageFile = new File(cacheImageFilePath);
+
+        // create empty image file in internal storage
+        File internalStoragePhotoFile = FileCreator.createNewImageFileInInternalAppDirectory(getActivity());
+        Log.d(TAG, "Size of this new empty file: " + internalStoragePhotoFile.length());
+        Log.d(TAG, "Newly created file abs path: " + internalStoragePhotoFile.getAbsolutePath());
+
+        // move the cached crop image file to the app's internal storage (no need to delete because we moved it)
+        if (cachedCropImageFile.renameTo(internalStoragePhotoFile)) {
+            Log.d(TAG, "Successfully moved file");
+        } else {
+            Log.d(TAG, "Failed to moved file");
+        }
+
+        Log.d(TAG, "Cropped file has been moved (size of it now): " + internalStoragePhotoFile.length());
+
+        // return the file path of the new internal storage image file
+        return internalStoragePhotoFile.getAbsolutePath();
+
     }
 
 

@@ -6,7 +6,7 @@
 
     <item
         android:id="@+id/action_add"
-        android:icon="@drawable/ic_add_box_white_24dp"
+        android:icon="@mipmap/ic_launcher"
         android:orderInCategory="1"
         android:title="Add Moment"
         app:showAsAction="always"/>

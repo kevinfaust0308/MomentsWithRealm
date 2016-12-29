@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.monsoonblessing.moments.MomentModel;
 import com.monsoonblessing.moments.R;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,13 +34,6 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     private Context mContext;
     private ArrayList<MomentModel> mMoments;
 
-
-    public MyRecyclerViewAdapter(Context context, RealmResults<MomentModel> moments) {
-        mContext = context;
-        mMoments = new ArrayList<>(moments);
-    }
-
-
     public MyRecyclerViewAdapter(Context context, ArrayList<MomentModel> moments) {
         mContext = context;
         mMoments = moments;
@@ -47,7 +41,12 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
 
 
     public void updateData(RealmResults<MomentModel> updatedRealmResults) {
-        mMoments = new ArrayList<>(updatedRealmResults);
+        clearData();
+        mMoments.addAll(updatedRealmResults);
+        notifyDataSetChanged();
+        for (MomentModel m : mMoments) {
+            Log.d(TAG, "New objects in this adapter: " + m.toString());
+        }
     }
 
 
@@ -91,17 +90,11 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         holder.cardTitle.setText(title);
         holder.cardDate.setText(date);
 
-        Typeface myTypeface = Typeface.createFromAsset(mContext.getAssets(), "fonts/Raleway-Regular.ttf");
-        holder.cardTitle.setTypeface(myTypeface);
-        holder.cardDate.setTypeface(myTypeface);
-
         Log.d(TAG, "Loading photo: " + moment.getPhotoUri());
-        Uri uri = Uri.parse(moment.getPhotoUri());
 
         Glide.with(mContext)
-                .load(uri)
+                .load(moment.getPhotoUri())
                 .fitCenter()
-                .placeholder(R.drawable.greyplaceholder)
                 .into(holder.cardImage);
     }
 

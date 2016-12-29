@@ -36,7 +36,5 @@ dependencies {
     compile 'com.jakewharton:butterknife:8.1.0'
     compile 'com.google.code.gson:gson:2.7'
     compile 'com.theartofdev.edmodo:android-image-cropper:2.3.+'
-    // https://mvnrepository.com/artifact/commons-io/commons-io
-    compile group: 'commons-io', name: 'commons-io', version: '2.5'
 
 }

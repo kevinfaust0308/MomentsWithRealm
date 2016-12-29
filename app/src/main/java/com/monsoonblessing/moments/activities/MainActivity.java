@@ -1,22 +1,28 @@
 package com.monsoonblessing.moments.Activities;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.DialogFragment;
-import android.app.FragmentTransaction;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
 import com.google.gson.Gson;
+import com.monsoonblessing.moments.MetricUtils;
 import com.monsoonblessing.moments.MomentModel;
 import com.monsoonblessing.moments.R;
 import com.monsoonblessing.moments.R2;
@@ -27,12 +33,11 @@ import com.monsoonblessing.moments.SearchPreference;
 import com.monsoonblessing.moments.Adapters.MyRecyclerViewAdapter;
 import com.monsoonblessing.moments.Enums.SortingOptions;
 import com.monsoonblessing.moments.Fragments.CreateNewMoment;
-import com.monsoonblessing.moments.Fragments.MomentConfig;
-import com.monsoonblessing.moments.Fragments.SearchFragment;
 import com.monsoonblessing.moments.Fragments.SettingsDialog;
 import com.monsoonblessing.moments.Fragments.UpdateMoment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,24 +45,21 @@ import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
-public class MainActivity extends AppCompatActivity
-        implements SearchFragment.OnFilterListener, SettingsDialog.OnDeleteListener {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String SEARCH_PREFS = "SearchPreference";
 
     @BindView(R2.id.recyclerView)
     RecyclerView mRecyclerView;
     @BindView(R2.id.viewSwitcher)
     ViewSwitcher mEntriesViewSwitcher;
-    @BindView(R2.id.fragmentContainer)
-    FrameLayout mFilterSearchFragmentContainer;
     @BindView(R2.id.noEntriesText)
     TextView mNoEntriesFoundText;
     @BindView(R2.id.my_toolbar)
     Toolbar mToolbar;
 
     private MyRecyclerViewAdapter mAdapter;
-    private SearchFragment mSearchFragment;
     private SearchPreference mSearchPreference;
 
     private RealmResults<MomentModel> mMomentsRealmResults;
@@ -66,12 +68,29 @@ public class MainActivity extends AppCompatActivity
 
     private Realm realm;
 
+    //search layout
+    @BindView(R2.id.search_layout)
+    LinearLayout searchLayout;
+    @BindView(R2.id.spinner_month)
+    Spinner mSpinnerMonth;
+    @BindView(R2.id.spinner_year)
+    Spinner mSpinnerYear;
+    @BindView(R2.id.spinner_sort)
+    Spinner mSpinnerSort;
+    @BindView(R2.id.search_button)
+    ImageButton mSearchButton;
+    //adapters
+    private ArrayAdapter<CharSequence> monthsAdapter;
+    private ArrayAdapter<String> yearsAdapter;
+    private ArrayAdapter<String> sortOptionsAdapter;
+
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         realm.close();
     }
+
 
 
     @Override
@@ -84,44 +103,19 @@ public class MainActivity extends AppCompatActivity
         realm = Realm.getDefaultInstance();
 
         mSharedPreferences = getSharedPreferences("com.monsoonblessing.moments", MODE_PRIVATE);
-        Gson gson = new Gson();
-        String searchPreference = mSharedPreferences.getString("SearchPreference", null);
+        String searchPreference = mSharedPreferences.getString(SEARCH_PREFS, null);
         if (searchPreference != null) {
-            mSearchPreference = gson.fromJson(searchPreference, SearchPreference.class);
+            mSearchPreference = new Gson().fromJson(searchPreference, SearchPreference.class);
         } else {
             mSearchPreference = new SearchPreference();
         }
 
-        mMomentsRealmResults = RealmDatabaseHelper.searchEntries(mSearchPreference);
-        if (mMomentsRealmResults.size() == 0) {
-            //hide recyclerview and tell user there are no entries
-            Log.d(TAG, "View switcher: " + mEntriesViewSwitcher);
-            showNoEntryUI();
-            mAdapter = new MyRecyclerViewAdapter(MainActivity.this, new ArrayList<MomentModel>(0));
-        } else {
-            // debugging. see all entries on launch
-            for (MomentModel m : mMomentsRealmResults) {
-                Log.d(TAG, m.toString());
-            }
-            mAdapter = new MyRecyclerViewAdapter(MainActivity.this, mMomentsRealmResults);
-        }
-        mRecyclerView.setAdapter(mAdapter);
-
-
-        // basically when we submit new entries, this listener will take care of everything
-        mMomentsRealmResults.addChangeListener(new RealmChangeListener<RealmResults<MomentModel>>() {
-            @Override
-            public void onChange(RealmResults<MomentModel> results) {
-                if (results.size() == 0) {
-                    //hide recyclerview and tell user there are no entries
-                    showNoEntryUI();
-                } else {
-                    mAdapter.updateData(mMomentsRealmResults);
-                    mAdapter.notifyDataSetChanged();
-                    showEntryUI();
-                }
-            }
-        });
+        // create an adapter with no data
+        //TEMPORARILY CREATING AND SETTING ADAPTER EVER TIME UI CHANGES BECUZ OF SOME BUG WHERE IT ISNT UPDATING SOMETIMES
+        //mAdapter = new MyRecyclerViewAdapter(this, new ArrayList<MomentModel>(0));
+        //mRecyclerView.setAdapter(mAdapter);
+        // fetch our data and update the adapter and add listener
+        reloadMomentsRealmResults(mSearchPreference);
 
 
         PreCachingLayoutManager manager = new PreCachingLayoutManager(this);
@@ -131,13 +125,13 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void OnItemLongClick(View v, final int position) {
-                TextView edit = (TextView) v.findViewById(R.id.edit_text);
-                TextView delete = (TextView) v.findViewById(R.id.delete_text);
+                ImageButton edit = (ImageButton) v.findViewById(R.id.edit_btn);
+                ImageButton delete = (ImageButton) v.findViewById(R.id.delete_btn);
                 ImageButton close = (ImageButton) v.findViewById(R.id.close_text);
                 final ViewSwitcher cardViewSwitcher = (ViewSwitcher) v.findViewById(R.id.cardViewSwitcher);
 
                 cardViewSwitcher.setDisplayedChild(1);
-                hideSearchFragment();
+                hideSearchLayout();
 
                 final MomentModel moment = mAdapter.getData(position);
 
@@ -179,11 +173,8 @@ public class MainActivity extends AppCompatActivity
 
         ));
 
-        mSearchFragment = new SearchFragment();
+        setUpSearchLayout();
 
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        ft.add(R.id.fragmentContainer, mSearchFragment, "searchFragment");
-        ft.commit();
     }
 
 
@@ -206,18 +197,13 @@ public class MainActivity extends AppCompatActivity
             //add new moment popup
             case R.id.action_add:
                 //hide search frag if visible
-                hideSearchFragment();
+                hideSearchLayout();
                 DialogFragment frag = new CreateNewMoment();
                 frag.show(getFragmentManager(), "addMoment");
                 return true;
             //toggle fragment visibility
             case R.id.action_launch_filter_screen:
-                if (mFilterSearchFragmentContainer.getVisibility() == View.VISIBLE) {
-                    hideSearchFragment();
-                } else {
-                    mSearchFragment.updateYearDropdownOptions();
-                    mFilterSearchFragmentContainer.setVisibility(View.VISIBLE);
-                }
+                toggleSearchLayout();
                 return true;
             case R.id.action_settings:
                 SettingsDialog sd = new SettingsDialog();
@@ -228,58 +214,38 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    public void hideSearchFragment() {
-        if (mFilterSearchFragmentContainer.getVisibility() == View.VISIBLE) {
-            mFilterSearchFragmentContainer.setVisibility(View.GONE);
-        }
-    }
 
-
-    /*
-    Called when we filter our entries
-    Callback interface implementation. Declaration in SearchFragment.java
-    Re-sort and retrieve data and then update UI by updating the adapter
-    */
-    @Override
-    public void OnFilter(SearchPreference searchPreference) {
-        hideSearchFragment();
-
-        mMomentsRealmResults = RealmDatabaseHelper.searchEntries(searchPreference);
+    public void loadMomentsUI() {
         if (mMomentsRealmResults.size() == 0) {
             //hide recyclerview and tell user there are no entries
             showNoEntryUI();
         } else {
-            mAdapter.updateData(mMomentsRealmResults);
-            mAdapter.notifyDataSetChanged();
+            // temporary fix. just updating the adapter doesnt seem to work sometimes
+            mAdapter = new MyRecyclerViewAdapter(this, new ArrayList<>(mMomentsRealmResults));
+            mRecyclerView.setAdapter(mAdapter);
             showEntryUI();
         }
-
     }
 
 
-    /*
-    Called when we delete all entries
-    Callback interface implementation. Declaration in SettingsDialog.java
-    Update UI prompting user to add an entry and remove filter menu item
-    */
-    @Override
-    public void OnDelete() {
-        hideSearchFragment();
 
-        //when adding new entries after deletion, images are still temporarily cached and those old photos will flicker briefly
-        mAdapter.clearData();
-        mAdapter.notifyDataSetChanged();
-
-        //setDefaultSearchSettings search preferences
-        // SharedPreferences.Editor sharedPreferences = getSharedPreferences("com.monsoonblessing.moments", MODE_PRIVATE).edit();
-        // sharedPreferences.putString("SearchPreference", new Gson().toJson(new SearchPreference())).apply();
-        mSearchPreference.setDefaultSearchSettings();
-
-        //display "Add entry text" because search preference is now null (must be after the search pref setDefaultSearchSettings ^^)
-        //we call this here because OnDelete means there are 0 entries
-        showNoEntryUI();
-        //setDefaultSearchSettings search fragment dropdown
-        mSearchFragment.reset();
+    public void reloadMomentsRealmResults(SearchPreference searchPreference) {
+        Log.d(TAG, "Reloading moments from realm");
+        // remove current listener if not first launch
+        if (mMomentsRealmResults != null) {
+            mMomentsRealmResults.removeChangeListeners();
+        }
+        // change data source
+        mMomentsRealmResults = RealmDatabaseHelper.searchEntries(searchPreference);
+        // update moments ui
+        loadMomentsUI();
+        // add listener to new data source
+        mMomentsRealmResults.addChangeListener(new RealmChangeListener<RealmResults<MomentModel>>() {
+            @Override
+            public void onChange(RealmResults<MomentModel> element) {
+                loadMomentsUI();
+            }
+        });
     }
 
 
@@ -288,6 +254,9 @@ public class MainActivity extends AppCompatActivity
         String monthFilter = mSearchPreference.getMonth();
         String yearFilter = mSearchPreference.getYear();
         String text = "";
+
+        Log.d(TAG, "month filter: " + monthFilter);
+        Log.d(TAG, "year filter: " + yearFilter);
 
         if (monthFilter.equals(SearchPreference.DEFAULT_ALL_DATE_ENTRIES) && yearFilter.equals(SearchPreference.DEFAULT_ALL_DATE_ENTRIES)) {
             text = "Add a new entry to get started";
@@ -306,27 +275,105 @@ public class MainActivity extends AppCompatActivity
     }
 
 
+    /******************** Search layout things ************************/
+
+    public void setUpSearchLayout() {
+         /*
+        Set up adapter and make dropdown box select preconfigured settings (if any)
+        --> preconfigured settings will be stored in member variables
+        --> these get updated when user performs a filter request
+         */
+        //set up months dropdown
+        monthsAdapter = ArrayAdapter.createFromResource(this, R.array.months_array, R.layout.textview);
+        monthsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
+        mSpinnerMonth.setAdapter(monthsAdapter);
+        //set selected month value
+        mSpinnerMonth.setSelection(monthsAdapter.getPosition(mSearchPreference.getMonth()), false);
+
+
+        //set up sort dropdown
+        sortOptionsAdapter = new ArrayAdapter<>(this, R.layout.textview, getSortingOptions());
+        sortOptionsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
+        mSpinnerSort.setAdapter(sortOptionsAdapter);
+        //set selected sort option
+        mSpinnerSort.setSelection(sortOptionsAdapter.getPosition(mSearchPreference.getSortOption().getDescription()), false);
+
+
+        // set up years dropdown
+        yearsAdapter = new ArrayAdapter<>(this, R.layout.textview, RealmDatabaseHelper.getYears());
+        yearsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
+        mSpinnerYear.setAdapter(yearsAdapter);
+        //set selected year value
+        mSpinnerYear.setSelection(yearsAdapter.getPosition(mSearchPreference.getYear()), false);
+
+
+        //updated search field variables, save in shared prefs, and reload UI
+        mSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String monthFilter = mSpinnerMonth.getSelectedItem().toString();
+                String yearFilter = mSpinnerYear.getSelectedItem().toString();
+                String sortFilter = mSpinnerSort.getSelectedItem().toString();
+
+                Log.d(TAG, "mSearchPreference: " + monthFilter + " " + yearFilter + " " + sortFilter);
+
+                mSearchPreference = new SearchPreference(monthFilter, yearFilter, SortingOptions.getEnum(sortFilter));
+                reloadMomentsRealmResults(mSearchPreference);
+            }
+        });
+    }
+
+    public void updateYearDropdownOptions() {
+        yearsAdapter.clear();
+        yearsAdapter.addAll(RealmDatabaseHelper.getYears());
+        yearsAdapter.notifyDataSetChanged();
+
+        //set selected year value. when submitting, we store the year filter value
+        mSpinnerYear.setSelection(yearsAdapter.getPosition(mSearchPreference.getYear()), false);
+    }
+
+
+    public List<String> getSortingOptions() {
+        List<String> list = new ArrayList<>();
+        for (SortingOptions option : SortingOptions.values()) {
+            list.add(option.getDescription());
+        }
+        return list;
+    }
+
+    public void toggleSearchLayout() {
+        if (searchLayout.getY() == 0) {
+            hideSearchLayout();
+        } else {
+            showSearchLayout();
+        }
+    }
+
+    private void hideSearchLayout() {
+        ObjectAnimator.ofFloat(searchLayout, "y", MetricUtils.dpToPx(-330)).start();
+    }
+
+    private void showSearchLayout() {
+        ObjectAnimator.ofFloat(searchLayout, "y", 0f).start();
+        // update year dropdown
+        updateYearDropdownOptions();
+
+    }
+
+    /***************** END OF SEARCH LAYOUT THINGS ******************/
+
+    public void saveSearchPreferences() {
+        Log.d(TAG, "Storing search prefs: " + mSearchPreference.getMonth() + " " + mSearchPreference.getYear() + " " + mSearchPreference.getSortOption());
+
+        // change search preference object to json to store
+        String pref = new Gson().toJson(mSearchPreference);
+        mSharedPreferences.edit().putString(SEARCH_PREFS, pref).apply();
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
-
-        // get search preference fields
-        String monthFilter = mSearchPreference.getMonth();
-        String yearFilter = mSearchPreference.getYear();
-        SortingOptions sortingOptions = mSearchPreference.getSortOption();
-
-        // create the search preference object
-        SearchPreference sp = new SearchPreference(
-                (monthFilter.equals("All")) ? null : monthFilter,
-                (yearFilter.equals("All")) ? null : yearFilter,
-                sortingOptions
-        );
-
-        Log.d(TAG, "Storing search prefs: " + monthFilter + " " + yearFilter + " " + sortingOptions);
-
-        // change search preference object to json to store
-        String pref = new Gson().toJson(sp);
-        mSharedPreferences.edit().putString("SearchPreference", pref).apply();
+        saveSearchPreferences();
     }
 }
 

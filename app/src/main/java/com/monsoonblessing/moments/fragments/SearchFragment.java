@@ -1,3 +1,4 @@
+/*
 package com.monsoonblessing.moments.Fragments;
 
 import android.app.Fragment;
@@ -25,9 +26,11 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+*/
 /**
  * Created by Kevin on 2016-06-24.
- */
+ *//*
+
 public class SearchFragment extends Fragment {
 
     public interface OnFilterListener {
@@ -36,11 +39,11 @@ public class SearchFragment extends Fragment {
 
     private static final String TAG = SearchFragment.class.getSimpleName();
 
-    @BindView(R.id.textView)
+    @BindView(R.id.month_text)
     TextView monthText;
-    @BindView(R.id.textView1)
+    @BindView(R.id.year_text)
     TextView yearText;
-    @BindView(R.id.textView2)
+    @BindView(R.id.sort_options_text)
     TextView filterText;
     @BindView(R.id.spinner_month)
     Spinner mSpinnerMonth;
@@ -79,11 +82,13 @@ public class SearchFragment extends Fragment {
         }
 
 
-        /*
+        */
+/*
         Set up adapter and make dropdown box select preconfigured settings (if any)
         --> preconfigured settings will be stored in member variables
         --> these get updated when user performs a filter request
-         */
+         *//*
+
         //set up months dropdown
         monthsAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.months_array, R.layout.textview);
         monthsAdapter.setDropDownViewResource(R.layout.simple_dropdown_box);
@@ -130,13 +135,6 @@ public class SearchFragment extends Fragment {
             }
         });
 
-
-        //custom font for the text descriptions
-        Typeface myTypeface = Typeface.createFromAsset(getActivity().getAssets(), "fonts/Raleway-Regular.ttf");
-        monthText.setTypeface(myTypeface);
-        yearText.setTypeface(myTypeface);
-        filterText.setTypeface(myTypeface);
-
         return v;
     }
 
@@ -160,13 +158,16 @@ public class SearchFragment extends Fragment {
     }
 
 
-    //when deleting all entries, setDefaultSearchSettings the dropdown selection to defaults (year auto updates)
+*/
+/*    //when deleting all entries, setDefaultSearchSettings the dropdown selection to defaults (year auto updates)
     public void reset() {
         monthFilter = "All";
         mSpinnerMonth.setSelection(monthsAdapter.getPosition(monthFilter), false);
 
         sortFilter = SortingOptions.ORDER_ADDED.getDescription();
         mSpinnerSort.setSelection(sortOptionsAdapter.getPosition(sortFilter), false);
-    }
+    }*//*
+
 
 }
+*/
