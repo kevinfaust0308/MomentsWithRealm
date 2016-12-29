@@ -30,11 +30,11 @@
             </android.support.v7.widget.RecyclerView>
 
             <TextView
-                android:padding="30dp"
                 android:id="@+id/noEntriesText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="50dp"/>
 
         </ViewSwitcher>
 
@@ -50,12 +50,12 @@
             android:translationY="-330dp">
 
             <TextView
-                android:textColor="@color/md_deep_purple_900"
-                android:layout_marginTop="10dp"
                 android:id="@+id/month_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:text="Month"
+                android:textColor="@color/md_deep_purple_900"
                 android:textSize="16sp"/>
 
             <Spinner
@@ -67,12 +67,12 @@
 
 
             <TextView
-                android:textColor="@color/md_deep_purple_900"
                 android:id="@+id/year_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:text="Year"
+                android:textColor="@color/md_deep_purple_900"
                 android:textSize="16sp"/>
 
             <Spinner
@@ -83,12 +83,12 @@
 
 
             <TextView
-                android:textColor="@color/md_deep_purple_900"
                 android:id="@+id/sort_options_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:text="Sort option"
+                android:textColor="@color/md_deep_purple_900"
                 android:textSize="16sp"/>
 
             <Spinner

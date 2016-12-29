@@ -4,6 +4,11 @@
 ### Currently being migrating from built-in SQLite to Realm, fixing image save/load bugs, and storage optimization :raised_hands:
 Playstore download link: https://goo.gl/JTRCcM
 
+#### Update December 30, 2016
+- VERSION 2 RELEASED ON PLAY STORE
+- improved how recyclerview and adapter interact
+- updated app screenshots for publish
+
 #### Update December 29, 2016
 - fixed way to store photo's uri (absolute file path)
 - deleting entries from database will delete the associated image file
@@ -22,4 +27,4 @@ Playstore download link: https://goo.gl/JTRCcM
 - migrated from Picasso to Glide which led to images being load faster (and fixed a glitch where images would not load on app restart)
 
 #### Update June 29, 2016
-- original version of app first created
+- VERSION 1 RELEASED ON PLAY STORE

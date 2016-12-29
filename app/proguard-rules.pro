@@ -15,7 +15,9 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
--dontwarn com.squareup.picasso.**
+-keepnames class com.mypackage.MyGlideModule
+# or more generally:
+#-keep public class * implements com.bumptech.glide.module.GlideModule
 
 ##---------------Begin: proguard configuration for Gson  ----------
 # Gson uses generic type information stored in a class file when working with fields. Proguard
@@ -50,3 +52,12 @@
 #    public *;
 #}
 #-keepattributes InnerClasses
+
+# Retain generated class which implement Unbinder.
+-keep public class * implements butterknife.Unbinder { public <init>(...); }
+
+# Prevent obfuscation of types which use ButterKnife annotations since the simple name
+# is used to reflectively look up the generated ViewBinding.
+-keep class butterknife.*
+-keepclasseswithmembernames class * { @butterknife.* <methods>; }
+-keepclasseswithmembernames class * { @butterknife.* <fields>; }
