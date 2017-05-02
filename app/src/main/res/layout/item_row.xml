@@ -66,20 +66,22 @@
                 android:orientation="horizontal">
 
                 <ImageButton
-                    android:background="#00000000"
-                    android:src="@drawable/editlarge"
                     android:id="@+id/edit_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="25dp"/>
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:background="#00000000"
+                    android:padding="25dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/editlarge"/>
 
                 <ImageButton
-                    android:background="#00000000"
-                    android:src="@drawable/trashcanlarge"
                     android:id="@+id/delete_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="25dp"/>
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:background="#00000000"
+                    android:padding="25dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/trashcanlarge"/>
 
             </LinearLayout>
 
