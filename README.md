@@ -1,7 +1,7 @@
 # Moments
 
 ## Keep memories close and Moments closer!
-### Currently being migrating from built-in SQLite to Realm, fixing image save/load bugs, and storage optimization :raised_hands:
+### Currently being migrating from built-in SQLite to Realm, fixing image save/load bugs, and storage optimization 
 Playstore download link: https://goo.gl/JTRCcM
 
 #### Update December 30, 2016
